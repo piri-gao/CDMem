@@ -12,20 +12,6 @@ env = env.init_env(batch_size=1)
 
 # interact
 obs, info = env.reset()
-# print(obs)
-# print(info)
-# num = 0
-# while True:
-#     new_obs , new_info = env.reset()
-#     print(new_obs)
-#     print(new_info)
-#     if new_obs == obs:
-#         break 
-#     else:
-#         num += 1
-#     print(num)
-# print(new_obs)
-# print(new_info)
 while True:
     # get random actions from admissible 'valid' commands (not available for AlfredThorEnv)
     admissible_commands = list(info['admissible_commands']) # note: BUTLER generates commands word-by-word without using admissible_commands
