@@ -1,5 +1,5 @@
 import os
-import json
+from datetime import datetime
 import argparse
 from agents import AGENT
 from envs import ENV
@@ -20,7 +20,7 @@ def get_args():
     parser.add_argument("--resume_dir", type=str, help="If resume, the logging directory", default="")
     parser.add_argument("--start_trial_num", type=int, help="If resume, the start trial num", default=0)
     parser.add_argument("--model", type=str, help="The model to use. One of `gpt-4`, `gpt-3.5-turbo`, or `text-davinci-003")
-    parser.add_argument("--agent", type=str, help="The agent to use. One of `reflect`")
+    parser.add_argument("--agent", type=str, help="The agent to use. One of `reflect`, `hpc`")
     parser.add_argument("--env", type=str, help="The enviroment to use. One of `alfworld`")
 
     args = parser.parse_args()
@@ -36,11 +36,13 @@ def main(args):
             raise ValueError(f"Resume directory `{args.resume_dir}` does not exist")
         logging_dir = args.resume_dir
     else:
-        logging_dir = os.path.join('./logs/', args.run_name)
+        now = datetime.now()
+        timestamp = now.strftime("%m%d_%H%M%S")
+        logging_dir = os.path.join('./logs/', args.run_name + '_' + timestamp)
         if not os.path.exists(logging_dir):
             os.makedirs(logging_dir)
     
-    agent = AGENT[args.agent](
+    agent = AGENT[args.env][args.agent](
                             num_trials = args.num_trials,
                             num_envs = args.num_envs,
                             max_steps = args.max_steps,
@@ -48,10 +50,10 @@ def main(args):
                             model = args.model,
                             env = ENV[args.env],
                             llm_wrapper=LLM_WRAPPER[args.model.split('-')[0]],
-                            short_memory = SHORT_MEMORY[args.env],
-                            local_memory = LOCAL_MEMORY[args.env],
-                            prompt_builder = PROMPT_BUILDER[args.env],
-                            fewshot_builder = FEWSHOT_BUILDER[args.env]
+                            short_memory = SHORT_MEMORY[args.env][args.agent],
+                            local_memory = LOCAL_MEMORY[args.env][args.agent],
+                            prompt_builder = PROMPT_BUILDER[args.env][args.agent],
+                            fewshot_builder = FEWSHOT_BUILDER[args.env][args.agent]
                             )
 
     if args.is_resume:

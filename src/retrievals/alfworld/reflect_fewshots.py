@@ -15,7 +15,7 @@ PREFIXES = {
     'pick_two_obj': 'puttwo'
 }
 
-class AlfworldFewshotBuilder:
+class ReflectFewshotBuilder:
     def __init__(self):
         pass
     

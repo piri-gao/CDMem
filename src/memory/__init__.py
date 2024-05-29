@@ -1,4 +1,4 @@
-from .alfworld_memory import ShortMemory, LocalMemory
+from .alfworld import ReflectShortMemory, ReflectLocalMemory, HPCShortMemory, HPCLocalMemory
 
-SHORT_MEMORY = dict(alfworld=ShortMemory)
-LOCAL_MEMORY = dict(alfworld=LocalMemory)
+SHORT_MEMORY = dict(alfworld=dict(reflect=ReflectShortMemory, hpc=HPCShortMemory))
+LOCAL_MEMORY = dict(alfworld=dict(reflect=ReflectLocalMemory, hpc=HPCLocalMemory))

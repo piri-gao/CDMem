@@ -53,4 +53,3 @@ class LocalMemory:
     
     def recall(self, idx: int):
         return self.history[idx]['memory']
-    

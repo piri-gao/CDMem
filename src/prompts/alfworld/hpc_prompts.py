@@ -1,4 +1,4 @@
-class AlfworldPromptBuilder:
+class HPCPromptBuilder:
     def __init__(self):
         pass
     
@@ -13,7 +13,7 @@ class AlfworldPromptBuilder:
         query += short_memories
         return query
                 
-    def get_reflection_prompts(self, log_str, fewshots, local_memories):
+    def get_local_reflection_prompts(self, log_str, fewshots, local_memories):
         scenario = log_str.split("Here is the task:")[-1].strip()
         query: str = f"""You will be given the history of a past experience in which you were placed in an environment and given a task to complete. You were unsuccessful in completing the task. Do not summarize your environment, but rather think about the strategy and path you took to attempt to complete the task. Devise a concise, new plan of action that accounts for your mistake with reference to specific actions that you should have taken. For example, if you tried A and B but forgot C, then devise a plan to achieve C with environment-specific actions. You will need this later when you are solving the same task. Give your plan after "Plan". Here are two examples:
 
@@ -28,5 +28,3 @@ class AlfworldPromptBuilder:
 
         query += '\n\nNew plan:'
         return query
-
-        

@@ -1,3 +1,3 @@
-from .alfworld_prompts import AlfworldPromptBuilder
+from .alfworld import HPCPromptBuilder, ReflectPromptBuilder
 
-PROMPT_BUILDER = dict(alfworld=AlfworldPromptBuilder)
+PROMPT_BUILDER = dict(alfworld=dict(reflect=ReflectPromptBuilder, hpc=HPCPromptBuilder))

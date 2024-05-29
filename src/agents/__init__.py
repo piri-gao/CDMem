@@ -1,4 +1,3 @@
-from .reflect import ReflectAgent
+from .alfworld import ReflectAgent, HPCAgent
 
-
-AGENT = dict(reflect=ReflectAgent)
+AGENT = dict(alfworld=dict(reflect=ReflectAgent, hpc=HPCAgent))
