@@ -50,6 +50,14 @@ class LocalMemory:
         
     def add(self, idx: int, reflection: str):
         self.history[idx]['memory'] += [reflection]
+        
+    def update(self, idx, input_dict):
+        for key in input_dict:
+            self.history[idx][key] = input_dict[key]
     
     def recall(self, idx: int):
         return self.history[idx]['memory']
+
+class GlobalMemory:
+    def __init__(self):
+        pass

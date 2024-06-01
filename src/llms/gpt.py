@@ -26,14 +26,14 @@ class GPTWrapper:
                 )
         self.model = model
                     
-    def __call__(self, prompt: str, stop: List[str] = ["\n"], mode: str = 'chat'):
+    def __call__(self, prompt: str, stop: List[str] = None, max_tokens: int = 256, mode: str = 'chat'):
         try:
             cur_try = 0
             while cur_try < 6:
                 if mode == "chat":
-                    text = self.get_chat(prompt=prompt, model=self.model, temperature=cur_try * 0.2, stop_strs=stop)
+                    text = self.get_chat(prompt=prompt, model=self.model, temperature=cur_try * 0.2, stop_strs=stop, max_tokens=max_tokens)
                 elif mode == "complete":
-                    text = self.get_completion(prompt=prompt, model=self.model, temperature=cur_try * 0.2, stop_strs=stop)
+                    text = self.get_completion(prompt=prompt, model=self.model, temperature=cur_try * 0.2, stop_strs=stop, max_tokens=max_tokens)
                 else:
                     raise ValueError(f"Invalid mode: {mode}, mode must be 'chat' or 'complete'.")
                 # dumb way to do this
@@ -48,7 +48,7 @@ class GPTWrapper:
             sys.exit(1)
     
     @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
-    def get_chat(self, prompt: str, model: ChatModel, temperature: float = 0.0, max_tokens: int = 256, 
+    def get_chat(self, prompt: str, model: ChatModel, max_tokens: int, temperature: float = 0.0, 
                     stop_strs: Optional[List[str]] = None, is_batched: bool = False) -> str:
         messages = [
             {
@@ -66,7 +66,7 @@ class GPTWrapper:
         return response.choices[0].message.content
 
     @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
-    def get_completion(self, prompt: str, model: CompleteModel, temperature: float = 0.0, max_tokens: int = 256, 
+    def get_completion(self, prompt: str, model: CompleteModel,  max_tokens: int, temperature: float = 0.0, 
                         stop_strs: Optional[List[str]] = None) -> str:
         response = self.client.completions.create(
             model=model,

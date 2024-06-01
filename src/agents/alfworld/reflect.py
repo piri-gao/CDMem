@@ -71,7 +71,7 @@ class ReflectAgent:
                 self.short_memory.reset()
                 with open(trial_log_path, 'r') as f:
                     full_log: str = f.read()
-                    env_logs: List[str] = full_log.split('#####\n\n#####')
+                env_logs: List[str] = full_log.split('#####\n\n#####')
                 self.update_local_memory(env_logs[env_idx], env_idx)
             self.env.close()
             log_str: str = f"""

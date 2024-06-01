@@ -13,18 +13,24 @@ class HPCPromptBuilder:
         query += short_memories
         return query
                 
-    def get_local_reflection_prompts(self, log_str, fewshots, local_memories):
+    def get_reflection_prompts(self, log_str, fewshots, local_memories):
         scenario = log_str.split("Here is the task:")[-1].strip()
-        query: str = f"""You will be given the history of a past experience in which you were placed in an environment and given a task to complete. You were unsuccessful in completing the task. Do not summarize your environment, but rather think about the strategy and path you took to attempt to complete the task. Devise a concise, new plan of action that accounts for your mistake with reference to specific actions that you should have taken. For example, if you tried A and B but forgot C, then devise a plan to achieve C with environment-specific actions. You will need this later when you are solving the same task. Give your plan after "Plan". Here are two examples:
+        query: str = f"""You will be given the history of a past experience in which you were placed in an environment and given a task to complete. You need to summarize the following based on this history:
+
+KNOWN OBS: Describes the known perceptions of the environment. For example, what exists in the environment and where.
+MY ACTIONS: Describes the actions you have taken. The descriptions of specific actions should match the history. If there is a series of similar actions that lead to the same consequences, some simplification can be made.
+REFLECTION: Describes the experiences or lessons learned in this history, guiding yourself to complete the task or complete it in fewer steps.
 
 {fewshots}
+
 
 {scenario}"""
 
         if len(local_memories) > 0:
-            query += '\n\nPlans from past attempts:\n'
+            
+            query += '\n\For the REFLECTION, you can refer to the REFLECTION from past attempts:\n'
             for i, m in enumerate(local_memories):
                 query += f'Trial #{i}: {m}\n'
 
-        query += '\n\nNew plan:'
+        query += '\nNow write your summary with KNOWN OBS, MY ACTIONS and REFLECTION'
         return query

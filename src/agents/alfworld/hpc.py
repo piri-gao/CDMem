@@ -1,6 +1,7 @@
 import sys
 import os
 import json
+import re
 
 from typing import List, Callable
 
@@ -49,6 +50,7 @@ class HPCAgent:
             num_additional_successes: int = 0
             for env_idx in range(self.num_envs):
                 init_ob, info = self.env.reset()
+                print(f"using {self.env.name}")
                 if self.local_memory.is_success(env_idx):
                     num_successes += 1
                     with open(world_log_path, 'a') as wf:
@@ -71,8 +73,9 @@ class HPCAgent:
                 self.short_memory.reset()
                 with open(trial_log_path, 'r') as f:
                     full_log: str = f.read()
-                    env_logs: List[str] = full_log.split('#####\n\n#####')
+                env_logs: List[str] = full_log.split('#####\n\n#####')
                 self.update_local_memory(env_logs[env_idx], env_idx)
+                    
             self.env.close()
             log_str: str = f"""
 -----
@@ -94,9 +97,10 @@ ACCURACY: {round(num_successes / self.num_envs, 2)}
     
     def run_trajectory(self, env_idx, init_ob, to_print=True):
         cur_step = 0
+        print(init_ob)
         while cur_step < self.max_steps:
             infer_prompt = self.build_infer_prompt(env_idx, init_ob)
-            action = self.llm(infer_prompt,  stop=['\n']).strip('>').strip()
+            action = self.llm(infer_prompt, stop=["\n"]).strip('>').strip()
             self.short_memory.add("action", action)
             observation, reward, done, exhausted, info = self.env.step(action)
             self.short_memory.add("observation", observation)
@@ -113,14 +117,16 @@ ACCURACY: {round(num_successes / self.num_envs, 2)}
         history_log = self.build_infer_prompt(env_idx, init_ob)
         return history_log, False
     
-    def update_local_memory(self, log_str, env_idx):
-        if not self.local_memory.is_success(env_idx) and not self.local_memory.is_skip(env_idx):
+    def update_local_memory(self, trial_log, env_idx):
+        if not self.local_memory.is_skip(env_idx):
             local_memories = self.local_memory.recall(env_idx)
             if len(local_memories) > 3:
                 local_memories = local_memories[-3:]
-            reflection_prompt = self.build_reflection_prompt(log_str, env_idx)
-            reflection = self.llm(reflection_prompt) 
+            reflection_prompt = self.build_reflection_prompt(trial_log, env_idx)
+            reflection_result = self.llm(reflection_prompt, max_tokens=512) 
+            expert_memory, reflection = self.process_expert_memory(reflection_result, trial_log)
             self.local_memory.add(env_idx, reflection)
+            self.local_memory.update(env_idx, expert_memory)
             
     def build_infer_prompt(self, env_idx, init_ob):
         short_memories = self.short_memory.recall()
@@ -136,3 +142,41 @@ ACCURACY: {round(num_successes / self.num_envs, 2)}
         fewshots = self.fewshot_builder.get_reflection_fewshots()
         query = self.prompt_builder.get_reflection_prompts(log_str, fewshots, local_memories)
         return query
+    
+    def process_expert_memory(self, reflection_result, trial_log):
+        scenario = trial_log.split("Here is the task:")[-1].strip()
+        env_pattern = r'You are in the middle of a room\..*?(?=\n)'
+        task_pattern = r'Your task is to: (.*?)(?=\n)'
+        known_obs_pattern = r'KNOWN OBS: (.*?)(?:\n|$)'
+        my_actions_pattern = r'MY ACTIONS: (.*?)(?:\n|$)'
+        reflection_pattern = r'REFLECTION: (.*?)(?:\n|$)'
+
+        env_description = task_description = status_description = ''
+        known_obs = my_actions = reflection = ''
+        
+        env_match = re.search(env_pattern, scenario, re.DOTALL)
+        if env_match:
+            env_description = env_match.group(0).strip()
+
+        task_match = re.search(task_pattern, scenario, re.DOTALL)
+        if task_match:
+            task_description = task_match.group(1).strip()
+            
+        known_obs_match = re.search(known_obs_pattern, reflection_result, re.DOTALL)
+        if known_obs_match:
+            known_obs = known_obs_match.group(1).strip()
+
+        my_actions_match = re.search(my_actions_pattern, reflection_result, re.DOTALL)
+        if my_actions_match:
+            my_actions = my_actions_match.group(1).strip()
+
+        reflection_match = re.search(reflection_pattern, reflection_result, re.DOTALL)
+        if reflection_match:
+            reflection = reflection_match.group(1).strip()
+            
+        expert_memory = dict(env=env_description,
+                             task=task_description,
+                             known_obs=known_obs,
+                             my_actions=my_actions
+                             )
+        return expert_memory, reflection

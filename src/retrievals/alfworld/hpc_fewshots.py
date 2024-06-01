@@ -25,6 +25,6 @@ class HPCFewshotBuilder:
                 return d[f'react_{v}_1'] + d[f'react_{v}_0']
                 
     def get_reflection_fewshots(self):
-        with open("./prompts/reflexion_few_shot_examples.txt", 'r') as f:
+        with open("./prompts/expert_few_shot_example.txt", 'r') as f:
             FEW_SHOT_EXAMPLES = f.read()
         return FEW_SHOT_EXAMPLES
