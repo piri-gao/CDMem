@@ -7,7 +7,7 @@ from typing import List, Callable
 
 class HPCAgent:
     """
-    Relection Agent class.
+    HPC Agent class.
     """
     def __init__(self, 
                  num_trials,
@@ -19,6 +19,7 @@ class HPCAgent:
                  model, 
                  short_memory, 
                  local_memory, 
+                 global_memory,
                  prompt_builder, 
                  fewshot_builder, 
                  *args, 
@@ -32,6 +33,7 @@ class HPCAgent:
         self.llm = llm_wrapper(model)
         self.short_memory = short_memory()
         self.local_memory = local_memory(num_envs)
+        self.global_memory = global_memory()
         self.prompt_builder = prompt_builder()
         self.fewshot_builder = fewshot_builder()
     
@@ -41,11 +43,17 @@ class HPCAgent:
             with open(world_log_path, 'a') as wf:
                 wf.write(f'\n\n***** Start Trial #{trial_idx} *****\n\n')
             trial_log_path: str = os.path.join(self.logging_dir, f'trial_{trial_idx}.log')
-            trial_env_configs_log_path: str = os.path.join(self.logging_dir, f'env_results_trial_{trial_idx}.json')
+            local_memory_log_path: str = os.path.join(self.logging_dir, f'local_memory_trial_{trial_idx}.json')
+            global_env_log_path: str = os.path.join(self.logging_dir, f'global_env_trial_{trial_idx}.json')
+            global_task_log_path: str = os.path.join(self.logging_dir, f'global_task_trial_{trial_idx}.json')
             if os.path.exists(trial_log_path):
                 open(trial_log_path, 'w').close()
-            if os.path.exists(trial_env_configs_log_path):
-                open(trial_env_configs_log_path, 'w').close()
+            if os.path.exists(local_memory_log_path):
+                open(local_memory_log_path, 'w').close()
+            if os.path.exists(global_env_log_path):
+                open(global_task_log_path, 'w').close()
+            if os.path.exists(global_env_log_path):
+                open(global_task_log_path, 'w').close()
             num_successes: int = 0
             num_additional_successes: int = 0
             for env_idx in range(self.num_envs):
@@ -74,8 +82,14 @@ class HPCAgent:
                 with open(trial_log_path, 'r') as f:
                     full_log: str = f.read()
                 env_logs: List[str] = full_log.split('#####\n\n#####')
-                self.update_local_memory(env_logs[env_idx], env_idx)
-                    
+                expert_trajectory = self.update_local_memory(env_logs[env_idx], env_idx)
+                with open(local_memory_log_path, 'w') as wf:
+                    json.dump(self.local_memory.history, wf, indent=4)
+                self.update_global_memory(expert_trajectory, env_idx, trial_idx)
+                with open(global_env_log_path, 'w') as wf:
+                    json.dump(self.global_memory.env_memory, wf, indent=4)
+                with open(global_task_log_path, 'w') as wf:
+                    json.dump(self.global_memory.task_memory, wf, indent=4)
             self.env.close()
             log_str: str = f"""
 -----
@@ -89,8 +103,6 @@ ACCURACY: {round(num_successes / self.num_envs, 2)}
                 wf.write(log_str)
             with open(world_log_path, 'a') as wf:
                 wf.write(log_str + '\n')
-            with open(trial_env_configs_log_path, 'w') as wf:
-                json.dump(self.local_memory.history, wf, indent=4)
             with open(world_log_path, 'a') as wf:
                 wf.write(f'\n\n***** End Trial #{trial_idx} *****\n\n')
             self.env.reload()
@@ -119,31 +131,53 @@ ACCURACY: {round(num_successes / self.num_envs, 2)}
     
     def update_local_memory(self, trial_log, env_idx):
         if not self.local_memory.is_skip(env_idx):
-            local_memories = self.local_memory.recall(env_idx)
-            if len(local_memories) > 3:
-                local_memories = local_memories[-3:]
             reflection_prompt = self.build_reflection_prompt(trial_log, env_idx)
             reflection_result = self.llm(reflection_prompt, max_tokens=512) 
-            expert_memory, reflection = self.process_expert_memory(reflection_result, trial_log)
-            self.local_memory.add(env_idx, reflection)
-            self.local_memory.update(env_idx, expert_memory)
+            expert_trajectory = self.process_after_reflection(reflection_result, trial_log)
+            self.local_memory.add(env_idx, expert_trajectory)
+        return expert_trajectory
             
+    def update_global_memory(self, expert_trajectory, env_idx, trial_idx):
+        env_summary = task_summary = ''
+        env_query, task_query = self.build_summary_prompt(expert_trajectory, env_idx, trial_idx)
+        if env_query:
+            env_summary = self.llm(env_query, max_tokens=512) 
+            self.global_memory.add(env_summary, expert_trajectory, mode='env')
+        if task_query:
+            task_summary = self.llm(task_query, max_tokens=512) 
+            self.global_memory.add(task_summary, expert_trajectory, mode='task')
+
     def build_infer_prompt(self, env_idx, init_ob):
         short_memories = self.short_memory.recall()
         local_memories = self.local_memory.recall(env_idx)
         if len(local_memories) > 3:
             local_memories = local_memories[-3:]
+        env_description , task_description = self.process_before_infer(init_ob)
+        known_obs_history, action_guidance_history = self.global_memory.recall(env_description , task_description)
         fewshots = self.fewshot_builder.get_inference_fewshots(self.env.name)
-        query = self.prompt_builder.get_inference_prompts(init_ob, fewshots, local_memories, short_memories)
+        query = self.prompt_builder.get_inference_prompts(init_ob, fewshots, local_memories, short_memories, known_obs_history, action_guidance_history)
         return query
         
     def build_reflection_prompt(self, log_str, env_idx):
         local_memories = self.local_memory.recall(env_idx)
+        if len(local_memories) > 3:
+            local_memories = local_memories[-3:]
         fewshots = self.fewshot_builder.get_reflection_fewshots()
         query = self.prompt_builder.get_reflection_prompts(log_str, fewshots, local_memories)
         return query
     
-    def process_expert_memory(self, reflection_result, trial_log):
+    def build_summary_prompt(self, expert_trajectory, env_idx, trial_idx):
+        env_query = task_query = ''
+        increment_env, increment_task = \
+                self.global_memory.short2long(self.logging_dir, expert_trajectory, env_idx, trial_idx)
+        if len(increment_env) != 0 or len(increment_task) != 0:
+            env_fewshots = self.fewshot_builder.get_summary_fewshots('env')
+            task_fewshots = self.fewshot_builder.get_summary_fewshots('task')
+            env_query, task_query = self.prompt_builder.get_summary_prompts(increment_env, increment_task,
+                                                                            env_fewshots, task_fewshots)
+        return env_query, task_query
+    
+    def process_after_reflection(self, reflection_result, trial_log):
         scenario = trial_log.split("Here is the task:")[-1].strip()
         env_pattern = r'You are in the middle of a room\..*?(?=\n)'
         task_pattern = r'Your task is to: (.*?)(?=\n)'
@@ -151,7 +185,7 @@ ACCURACY: {round(num_successes / self.num_envs, 2)}
         my_actions_pattern = r'MY ACTIONS: (.*?)(?:\n|$)'
         reflection_pattern = r'REFLECTION: (.*?)(?:\n|$)'
 
-        env_description = task_description = status_description = ''
+        env_description = task_description  = ''
         known_obs = my_actions = reflection = ''
         
         env_match = re.search(env_pattern, scenario, re.DOTALL)
@@ -161,7 +195,7 @@ ACCURACY: {round(num_successes / self.num_envs, 2)}
         task_match = re.search(task_pattern, scenario, re.DOTALL)
         if task_match:
             task_description = task_match.group(1).strip()
-            
+
         known_obs_match = re.search(known_obs_pattern, reflection_result, re.DOTALL)
         if known_obs_match:
             known_obs = known_obs_match.group(1).strip()
@@ -174,9 +208,25 @@ ACCURACY: {round(num_successes / self.num_envs, 2)}
         if reflection_match:
             reflection = reflection_match.group(1).strip()
             
-        expert_memory = dict(env=env_description,
+        expert_trajectory = dict(env=env_description,
                              task=task_description,
                              known_obs=known_obs,
-                             my_actions=my_actions
+                             my_actions=my_actions,
+                             memory=reflection,
                              )
-        return expert_memory, reflection
+        return expert_trajectory
+    
+    def process_before_infer(self, init_ob): 
+        env_description = task_description = ''
+        env_pattern = r'You are in the middle of a room\..*?(?=\n)'
+        task_pattern = r'Your task is to:\s*(.*)'
+
+        env_match = re.search(env_pattern, init_ob, re.DOTALL)
+        if env_match:
+            env_description = env_match.group(0).strip()
+
+        task_match = re.search(task_pattern, init_ob, re.DOTALL)
+        if task_match:
+            task_description = task_match.group(1).strip()
+        
+        return env_description, task_description

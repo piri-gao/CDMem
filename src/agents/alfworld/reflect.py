@@ -115,9 +115,6 @@ ACCURACY: {round(num_successes / self.num_envs, 2)}
     
     def update_local_memory(self, log_str, env_idx):
         if not self.local_memory.is_success(env_idx) and not self.local_memory.is_skip(env_idx):
-            local_memories = self.local_memory.recall(env_idx)
-            if len(local_memories) > 3:
-                local_memories = local_memories[-3:]
             reflection_prompt = self.build_reflection_prompt(log_str, env_idx)
             reflection = self.llm(reflection_prompt) 
             self.local_memory.add(env_idx, reflection)
@@ -133,6 +130,8 @@ ACCURACY: {round(num_successes / self.num_envs, 2)}
         
     def build_reflection_prompt(self, log_str, env_idx):
         local_memories = self.local_memory.recall(env_idx)
+        if len(local_memories) > 3:
+            local_memories = local_memories[-3:]
         fewshots = self.fewshot_builder.get_reflection_fewshots()
         query = self.prompt_builder.get_reflection_prompts(log_str, fewshots, local_memories)
         return query

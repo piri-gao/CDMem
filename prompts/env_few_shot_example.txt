@@ -1,0 +1,9 @@
+You have conducted multiple explorations in an environment and gathered some experiences related to it. Now, you need to summarize these experiences, forming a union of the multiple experiences, to better guide future explorations of this environment.
+Here are these experiences:
+Experience #0: Cabinet 1 contains a cloth 2. Cabinet 2 contains a cloth 3 and a soapbottle 2. Cabinet 3 contains a cloth 1 and a toiletpaper 2. Cabinet 4 contains a candle 2, a soapbottle 3, and a spraybottle 1.
+Experience #1: Cabinet 1 contains a cloth 2. Sinkbasin 1 and Sinkbasin 2 are empty. Towelholder 1 contains a towel 1.
+Experience #2: Sinkbasin 1 and Sinkbasin 2 are empty. Countertop 1 contains a candle 3, a candle 1, a soapbottle 1, and a spraybottle 2. Handtowelholder 1 contains a handtowel 1. 
+Now write your summary with these experiences:
+
+Cabinet 1 contains a cloth 2. Cabinet 2 contains a cloth 3 and a soapbottle 2. Cabinet 3 contains a cloth 1 and a toiletpaper 2. Cabinet 4 contains a candle 2, a soapbottle 3, and a spraybottle 1. Countertop 1 contains a candle 3, a candle 1, a soapbottle 1, and a spraybottle 2. Handtowelholder 1 contains a handtowel 1. Sinkbasin 1 and Sinkbasin 2 are empty.
+

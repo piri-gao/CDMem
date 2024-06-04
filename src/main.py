@@ -4,7 +4,7 @@ import argparse
 from agents import AGENT
 from envs import ENV
 from llms import LLM_WRAPPER
-from memory import SHORT_MEMORY, LOCAL_MEMORY
+from memory import SHORT_MEMORY, LOCAL_MEMORY, GLOBAL_MEMORY
 from prompts import PROMPT_BUILDER
 from retrievals import FEWSHOT_BUILDER
 
@@ -52,6 +52,7 @@ def main(args):
                             llm_wrapper=LLM_WRAPPER[args.model.split('-')[0]],
                             short_memory = SHORT_MEMORY[args.env][args.agent],
                             local_memory = LOCAL_MEMORY[args.env][args.agent],
+                            global_memory = GLOBAL_MEMORY[args.env][args.agent],
                             prompt_builder = PROMPT_BUILDER[args.env][args.agent],
                             fewshot_builder = FEWSHOT_BUILDER[args.env][args.agent]
                             )

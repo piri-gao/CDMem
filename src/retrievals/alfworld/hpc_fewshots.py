@@ -28,3 +28,16 @@ class HPCFewshotBuilder:
         with open("./prompts/expert_few_shot_example.txt", 'r') as f:
             FEW_SHOT_EXAMPLES = f.read()
         return FEW_SHOT_EXAMPLES
+    
+    def get_summary_fewshots(self, mode):
+        if mode == 'env':
+            with open("./prompts/env_few_shot_example.txt", 'r') as f:
+                FEW_SHOT_EXAMPLES = f.read()
+            return FEW_SHOT_EXAMPLES
+        elif mode == 'task':
+            with open("./prompts/task_few_shot_example.txt", 'r') as f:
+                FEW_SHOT_EXAMPLES = f.read()
+            return FEW_SHOT_EXAMPLES
+        else:
+            raise ValueError(f"Unseen mode type: {mode}")
+            
