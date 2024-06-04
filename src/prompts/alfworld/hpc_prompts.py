@@ -10,9 +10,9 @@ class HPCPromptBuilder:
             for i, m in enumerate(local_memories):
                 query += f'\nTrial {i}:\n{m.strip()}'
         if known_obs_history:
-            query += f'Known information about current environment:\n {known_obs_history}'
+            query += f'\nKnown information about current environment:\n {known_obs_history}'
         if action_guidance_history:
-            query += f'Action guidance about the task:\n{action_guidance_history}'
+            query += f'\nAction guidance about the task:\n{action_guidance_history}'
         query += f"\nHere is the task:\n{init_ob}"
         query += short_memories
         return query

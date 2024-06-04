@@ -112,7 +112,15 @@ ACCURACY: {round(num_successes / self.num_envs, 2)}
         print(init_ob)
         while cur_step < self.max_steps:
             infer_prompt = self.build_infer_prompt(env_idx, init_ob)
-            action = self.llm(infer_prompt, stop=["\n"]).strip('>').strip()
+            action = self.llm(infer_prompt, stop=["\n"]).strip()
+            if ">" in action:
+                action = action.replace(">", "").strip()
+            action_words = action.split(" ")
+            if "put" in action_words:
+                for i in range(len(action_words)):
+                    if action_words[i].strip().lower() == "in" or action_words[i].strip().lower() == 'on':
+                        action_words[i] = "in/on"
+                        action = " ".join(action_words)
             self.short_memory.add("action", action)
             observation, reward, done, exhausted, info = self.env.step(action)
             self.short_memory.add("observation", observation)
