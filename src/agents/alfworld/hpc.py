@@ -61,7 +61,6 @@ class HPCAgent:
                 else:
                     self.logger.log_world_fail(trial_idx, env_idx)
                 self.logger.log_trial_content(history_log, is_success, trial_idx, env_idx)
-                self.short_memory.reset()
                 expert_trajectory = self.update_local_memory(history_log, is_success, env_idx)
                 self.logger.log_local_memory(trial_idx)
                 self.update_global_memory(expert_trajectory, env_idx, trial_idx)
@@ -74,6 +73,7 @@ class HPCAgent:
     def run_trajectory(self, env_idx, init_ob, to_print=True):
         cur_step = 0
         print(init_ob)
+        self.short_memory.reset()
         while cur_step < self.max_steps:
             infer_prompt = self.build_infer_prompt(env_idx, init_ob)
             action = self.llm(infer_prompt, stop=["\n"]).strip()
@@ -127,7 +127,7 @@ class HPCAgent:
         local_memories = self.local_memory.recall(env_idx)
         if len(local_memories) > 3:
             local_memories = local_memories[-3:]
-        fewshots = self.fewshot_builder.get_reflection_fewshots()
+        fewshots = self.fewshot_builder.get_reflection_fewshots(is_success)
         query = self.prompt_builder.get_reflection_prompts(history_log, is_success, fewshots, local_memories)
         return query
     
