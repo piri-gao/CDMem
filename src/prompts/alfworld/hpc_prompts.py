@@ -17,11 +17,13 @@ class HPCPromptBuilder:
         query += short_memories
         return query
                 
-    def get_reflection_prompts(self, log_str, fewshots, local_memories):
+    def get_reflection_prompts(self, history_log, is_success, fewshots, local_memories):
+        log_str = history_log + f'\n\nSTATUS: {"OK" if is_success else "FAIL"}\n\n#####\n'
         scenario = log_str.split("Here is the task:")[-1].strip()
         query: str = f"""You will be given the history of a past experience in which you were placed in an environment and given a task to complete. You need to summarize the following based on this history:
 
-KNOWN OBS: Describes the known perceptions of the environment. For example, what exists in the environment and where.
+KNOWN OBS: 
+Describe your understanding of the current environment. This includes two aspects: first, the location where objects are placed within the current environment; second, the functions of some items. For example, the sink basin can be used to clean lettuce, and the fridge can be used to cool a mug
 MY ACTIONS: Describes the actions you have taken. The descriptions of specific actions should match the history. If there is a series of similar actions that lead to the same consequences, some simplification can be made.
 REFLECTION: Describes the experiences or lessons learned in this history, guiding yourself to complete the task or complete it in fewer steps.
 

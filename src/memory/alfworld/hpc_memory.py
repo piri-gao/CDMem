@@ -71,8 +71,10 @@ class GlobalMemory:
         env_description = expert_trajectory['env']
         task_description = expert_trajectory['task']
         task_type = self._convert_task_description(task_description)
+        is_success = expert_trajectory['is_success']
         retrieve_idx = dict(env_idx=env_idx, trial_idx=trial_idx)
-        
+        # 更新env_memory
+        # 属于好奇心：加入外部memory且取出增量记忆
         if env_description not in self.env_memory:
             self.env_memory[env_description] = {'known_obs':'', 
                                                 'increment_traj':[retrieve_idx],
@@ -90,10 +92,11 @@ class GlobalMemory:
             increment_env = dict(known_obs=self.env_memory[env_description]['known_obs'],
                                      increment_known_obs=increment_known_obs)
             self.env_memory[env_description]['increment_traj'] = []
+        # 否则只加入外部memory  
         else:
             self.env_memory[env_description]['increment_traj'].append(retrieve_idx)
             self.env_memory[env_description]['all_traj'].append(retrieve_idx)
-            
+        # 属于重复：反思  
         if len(self.env_memory[env_description]['increment_traj']) > self.env_bs:
             increment_known_obs = []
             for retrieve_idx in self.env_memory[env_description]['increment_traj']:
@@ -107,7 +110,8 @@ class GlobalMemory:
             increment_env = dict(known_obs=self.env_memory[env_description]['known_obs'],
                                     increment_known_obs=increment_known_obs)
             self.env_memory[env_description]['increment_traj'] = []
-            
+        # 更新task_memory
+        # 属于好奇心：加入外部memory且取出增量记忆
         if task_type not in self.task_memory:
             self.task_memory[task_type] = {'action_guidance': '', 
                                             'increment_traj':[retrieve_idx],
@@ -132,11 +136,11 @@ class GlobalMemory:
                                            action_guidance=self.task_memory[task_type]['action_guidance'],
                                            increment_action_guidance=increment_action_guidance
                                            )
-            
+        # 否则只加入外部memory    
         else:
             self.task_memory[task_type]['increment_traj'].append(retrieve_idx)
             self.task_memory[task_type]['all_traj'].append(retrieve_idx)
-            
+        # 属于重复：反思
         if len(self.task_memory[task_type]['increment_traj']) > self.task_bs:
             increment_action_guidance = []
             for retrieve_idx in self.task_memory[task_type]['increment_traj']:
@@ -190,7 +194,7 @@ class GlobalMemory:
         else:
             raise ValueError(f"Unseen mode: {mode}")
         
-    def recall(self, env_description , task_description):
+    def recall(self, env_description, task_description):
         env_recall = task_recall = ''
         if env_description:
             if env_description in self.env_memory:

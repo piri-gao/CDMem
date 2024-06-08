@@ -2,6 +2,7 @@ import sys
 import os
 import json
 import re
+import itertools
 
 from typing import List, Callable
 
@@ -36,24 +37,11 @@ class HPCAgent:
         self.global_memory = global_memory()
         self.prompt_builder = prompt_builder()
         self.fewshot_builder = fewshot_builder()
+        self.logger = Logger(self.logging_dir, self.num_trials, self.num_envs, self.local_memory, self.global_memory)
     
     def run(self):
-        world_log_path = os.path.join(self.logging_dir, 'world.log')
         for trial_idx in range(self.num_trials):
-            with open(world_log_path, 'a') as wf:
-                wf.write(f'\n\n***** Start Trial #{trial_idx} *****\n\n')
-            trial_log_path: str = os.path.join(self.logging_dir, f'trial_{trial_idx}.log')
-            local_memory_log_path: str = os.path.join(self.logging_dir, f'local_memory_trial_{trial_idx}.json')
-            global_env_log_path: str = os.path.join(self.logging_dir, f'global_env_trial_{trial_idx}.json')
-            global_task_log_path: str = os.path.join(self.logging_dir, f'global_task_trial_{trial_idx}.json')
-            if os.path.exists(trial_log_path):
-                open(trial_log_path, 'w').close()
-            if os.path.exists(local_memory_log_path):
-                open(local_memory_log_path, 'w').close()
-            if os.path.exists(global_env_log_path):
-                open(global_task_log_path, 'w').close()
-            if os.path.exists(global_env_log_path):
-                open(global_task_log_path, 'w').close()
+            self.logger.log_world_start(trial_idx)
             num_successes: int = 0
             num_additional_successes: int = 0
             for env_idx in range(self.num_envs):
@@ -61,50 +49,26 @@ class HPCAgent:
                 print(f"using {self.env.name}")
                 if self.local_memory.is_success(env_idx):
                     num_successes += 1
-                    with open(world_log_path, 'a') as wf:
-                        wf.write(f'Environment #{env_idx} Trial #{trial_idx}: SUCCESS\n')
-                    with open(trial_log_path, 'a') as wf:
-                        wf.write(f'\n#####\n\nEnvironment #{env_idx}: Success\n\n#####\n')
+                    self.logger.log_world_success(trial_idx, env_idx)
+                    self.logger.log_trial_success(trial_idx, env_idx)
                     continue
                 history_log, is_success = self.run_trajectory(env_idx, init_ob)
                 if is_success:
-                    status_str: str = f'Environment #{env_idx} Trial #{trial_idx}: SUCCESS'
+                    self.logger.log_world_success(trial_idx, env_idx)
                     self.local_memory.set_success(env_idx)
                     num_successes += 1
                     num_additional_successes += 1
                 else:
-                    status_str: str = f'Environment #{env_idx} Trial #{trial_idx}: FAIL'
-                with open(world_log_path, 'a') as f:
-                    f.write(status_str + '\n')
-                with open(trial_log_path, 'a') as wf:
-                    wf.write(f'\n#####\n\nEnvironment #{env_idx}:\n{history_log}\n\nSTATUS: {"OK" if is_success else "FAIL"}\n\n#####\n')
+                    self.logger.log_world_fail(trial_idx, env_idx)
+                self.logger.log_trial_content(history_log, is_success, trial_idx, env_idx)
                 self.short_memory.reset()
-                with open(trial_log_path, 'r') as f:
-                    full_log: str = f.read()
-                env_logs: List[str] = full_log.split('#####\n\n#####')
-                expert_trajectory = self.update_local_memory(env_logs[env_idx], env_idx)
-                with open(local_memory_log_path, 'w') as wf:
-                    json.dump(self.local_memory.history, wf, indent=4)
+                expert_trajectory = self.update_local_memory(history_log, is_success, env_idx)
+                self.logger.log_local_memory(trial_idx)
                 self.update_global_memory(expert_trajectory, env_idx, trial_idx)
-                with open(global_env_log_path, 'w') as wf:
-                    json.dump(self.global_memory.env_memory, wf, indent=4)
-                with open(global_task_log_path, 'w') as wf:
-                    json.dump(self.global_memory.task_memory, wf, indent=4)
+                self.logger.log_global_memory(trial_idx)
             self.env.close()
-            log_str: str = f"""
------
-SUCCESS: {num_successes}
-ADDITIONAL SUCCESS: {num_additional_successes}
-FAIL: {self.num_envs - num_successes}
-TOTAL: {self.num_envs}
-ACCURACY: {round(num_successes / self.num_envs, 2)}
------"""
-            with open(trial_log_path, 'a') as wf:
-                wf.write(log_str)
-            with open(world_log_path, 'a') as wf:
-                wf.write(log_str + '\n')
-            with open(world_log_path, 'a') as wf:
-                wf.write(f'\n\n***** End Trial #{trial_idx} *****\n\n')
+            self.logger.log_trial_end(trial_idx, num_successes, num_additional_successes)
+            self.logger.log_world_end(trial_idx, num_successes, num_additional_successes)
             self.env.reload()
     
     def run_trajectory(self, env_idx, init_ob, to_print=True):
@@ -113,14 +77,7 @@ ACCURACY: {round(num_successes / self.num_envs, 2)}
         while cur_step < self.max_steps:
             infer_prompt = self.build_infer_prompt(env_idx, init_ob)
             action = self.llm(infer_prompt, stop=["\n"]).strip()
-            if ">" in action:
-                action = action.replace(">", "").strip()
-            action_words = action.split(" ")
-            if "put" in action_words:
-                for i in range(len(action_words)):
-                    if action_words[i].strip().lower() == "in" or action_words[i].strip().lower() == 'on':
-                        action_words[i] = "in/on"
-                        action = " ".join(action_words)
+            action = self.env.action_parser(action)
             self.short_memory.add("action", action)
             observation, reward, done, exhausted, info = self.env.step(action)
             self.short_memory.add("observation", observation)
@@ -137,11 +94,11 @@ ACCURACY: {round(num_successes / self.num_envs, 2)}
         history_log = self.build_infer_prompt(env_idx, init_ob)
         return history_log, False
     
-    def update_local_memory(self, trial_log, env_idx):
+    def update_local_memory(self, history_log, is_success, env_idx):
         if not self.local_memory.is_skip(env_idx):
-            reflection_prompt = self.build_reflection_prompt(trial_log, env_idx)
+            reflection_prompt = self.build_reflection_prompt(history_log, is_success, env_idx)
             reflection_result = self.llm(reflection_prompt, max_tokens=512) 
-            expert_trajectory = self.process_after_reflection(reflection_result, trial_log)
+            expert_trajectory = self.process_after_reflection(reflection_result, history_log, is_success)
             self.local_memory.add(env_idx, expert_trajectory)
         return expert_trajectory
             
@@ -160,18 +117,18 @@ ACCURACY: {round(num_successes / self.num_envs, 2)}
         local_memories = self.local_memory.recall(env_idx)
         if len(local_memories) > 3:
             local_memories = local_memories[-3:]
-        env_description , task_description = self.process_before_infer(init_ob)
+        env_description, task_description = self.process_before_infer(init_ob)
         known_obs_history, action_guidance_history = self.global_memory.recall(env_description , task_description)
         fewshots = self.fewshot_builder.get_inference_fewshots(self.env.name)
         query = self.prompt_builder.get_inference_prompts(init_ob, fewshots, local_memories, short_memories, known_obs_history, action_guidance_history)
         return query
         
-    def build_reflection_prompt(self, log_str, env_idx):
+    def build_reflection_prompt(self, history_log, is_success, env_idx):
         local_memories = self.local_memory.recall(env_idx)
         if len(local_memories) > 3:
             local_memories = local_memories[-3:]
         fewshots = self.fewshot_builder.get_reflection_fewshots()
-        query = self.prompt_builder.get_reflection_prompts(log_str, fewshots, local_memories)
+        query = self.prompt_builder.get_reflection_prompts(history_log, is_success, fewshots, local_memories)
         return query
     
     def build_summary_prompt(self, expert_trajectory, env_idx, trial_idx):
@@ -185,8 +142,8 @@ ACCURACY: {round(num_successes / self.num_envs, 2)}
                                                                             env_fewshots, task_fewshots)
         return env_query, task_query
     
-    def process_after_reflection(self, reflection_result, trial_log):
-        scenario = trial_log.split("Here is the task:")[-1].strip()
+    def process_after_reflection(self, reflection_result, history_log, is_success):
+        scenario = history_log.split("Here is the task:")[-1].strip()
         env_pattern = r'You are in the middle of a room\..*?(?=\n)'
         task_pattern = r'Your task is to: (.*?)(?=\n)'
         known_obs_pattern = r'KNOWN OBS: (.*?)(?:\n|$)'
@@ -221,6 +178,7 @@ ACCURACY: {round(num_successes / self.num_envs, 2)}
                              known_obs=known_obs,
                              my_actions=my_actions,
                              memory=reflection,
+                             is_success=is_success
                              )
         return expert_trajectory
     
@@ -238,3 +196,73 @@ ACCURACY: {round(num_successes / self.num_envs, 2)}
             task_description = task_match.group(1).strip()
         
         return env_description, task_description
+    
+
+class Logger:
+    def __init__(self, logging_dir, num_trials, num_envs, local_memory, global_memory):
+        self.logging_dir = logging_dir
+        self.num_trials = num_trials
+        self.num_envs = num_envs
+        self.local_memory = local_memory
+        self.global_memory = global_memory
+        self.world_log_path = os.path.join(self.logging_dir, 'world.log')
+        self.trial_log_paths = [os.path.join(self.logging_dir, f'trial_{trial_idx}.log') for trial_idx in range(self.num_trials)]
+        self.local_memory_paths = [os.path.join(self.logging_dir, f'local_memory_trial_{trial_idx}.json') for trial_idx in range(self.num_trials)]
+        self.global_env_paths = [os.path.join(self.logging_dir, f'global_env_trial_{trial_idx}.json') for trial_idx in range(self.num_trials)]
+        self.global_task_paths = [os.path.join(self.logging_dir, f'global_task_trial_{trial_idx}.json') for trial_idx in range(self.num_trials)]
+        for path in list(itertools.chain(self.trial_log_paths, self.local_memory_paths, self.global_env_paths, self.global_task_paths)):
+            if os.path.exists(path):
+                open(path, 'w').close()
+                
+    def log_world_start(self, trial_idx):
+        with open(self.world_log_path, 'a') as wf:
+            wf.write(f'\n\n***** Start Trial #{trial_idx} *****\n\n')
+            
+    def log_world_success(self, trial_idx, env_idx):
+        with open(self.world_log_path, 'a') as wf:
+            wf.write(f'Environment #{env_idx} Trial #{trial_idx}: SUCCESS\n')
+            
+    def log_world_fail(self, trial_idx, env_idx):
+        with open(self.world_log_path, 'a') as wf:
+            wf.write(f'Environment #{env_idx} Trial #{trial_idx}: FAIL\n')  
+            
+    def log_world_end(self, trial_idx, num_successes, num_additional_successes):
+        log_str = self._get_stats_str(num_successes, num_additional_successes)
+        with open(self.world_log_path, 'a') as wf:
+            wf.write(log_str + '\n')
+            wf.write(f'\n\n***** End Trial #{trial_idx} *****\n\n')
+    
+    def log_trial_success(self, trial_idx, env_idx):
+        with open(self.trial_log_paths[trial_idx], 'a') as wf:
+            wf.write(f'\n#####\n\nEnvironment #{env_idx}: Success\n\n#####\n')
+            
+    def log_trial_content(self, content, is_success, trial_idx, env_idx):
+        with open(self.trial_log_paths[trial_idx], 'a') as wf:
+            wf.write(f'\n#####\n\nEnvironment #{env_idx}:\n{content}\n\nSTATUS: {"OK" if is_success else "FAIL"}\n\n#####\n')
+    
+    def log_trial_end(self, trial_idx, num_successes, num_additional_successes):
+        log_str = self._get_stats_str(num_successes, num_additional_successes)
+        with open(self.trial_log_paths[trial_idx], 'a') as wf:
+            wf.write(log_str)
+    
+    def log_local_memory(self, trial_idx):
+        with open(self.local_memory_paths[trial_idx], 'w') as wf:
+            json.dump(self.local_memory.history, wf, indent=4)
+            
+    def log_global_memory(self, trial_idx):
+        with open(self.global_env_paths[trial_idx], 'w') as wf:
+            json.dump(self.global_memory.env_memory, wf, indent=4)
+        with open(self.global_task_paths[trial_idx], 'w') as wf:
+            json.dump(self.global_memory.task_memory, wf, indent=4)
+            
+    def _get_stats_str(self, num_successes, num_additional_successes):
+        log_str: str = f"""
+-----
+SUCCESS: {num_successes}
+ADDITIONAL SUCCESS: {num_additional_successes}
+FAIL: {self.num_envs - num_successes}
+TOTAL: {self.num_envs}
+ACCURACY: {round(num_successes / self.num_envs, 2)}
+-----"""
+        return log_str
+        
