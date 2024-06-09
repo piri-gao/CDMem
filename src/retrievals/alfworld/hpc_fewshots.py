@@ -24,10 +24,14 @@ class HPCFewshotBuilder:
             if name.startswith(k):
                 return d[f'react_{v}_1'] + d[f'react_{v}_0']
                 
-    def get_reflection_fewshots(self):
+    def get_reflection_fewshots(self, is_success):
         with open("./prompts/expert_few_shot_example.txt", 'r') as f:
             FEW_SHOT_EXAMPLES = f.read()
-        return FEW_SHOT_EXAMPLES
+        examples = FEW_SHOT_EXAMPLES.split('\n\n\n')
+        if is_success:
+            return examples[:1]
+        else:
+            return '\n\n\n'.join(examples[2:])
     
     def get_summary_fewshots(self, mode):
         if mode == 'env':

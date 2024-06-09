@@ -15,18 +15,33 @@ class HPCPromptBuilder:
             query += f'\nAction guidance about the task:\n{action_guidance_history}'
         query += f"\nHere is the task:\n{init_ob}"
         query += short_memories
-        return query
+        return query    
                 
-    def get_reflection_prompts(self, log_str, fewshots, local_memories):
+    def get_reflection_prompts(self, history_log, is_success, fewshots, local_memories):
+        log_str = history_log + f'\n\nSTATUS: {"OK" if is_success else "FAIL"}\n\n#####\n'
         scenario = log_str.split("Here is the task:")[-1].strip()
-        query: str = f"""You will be given the history of a past experience in which you were placed in an environment and given a task to complete. You need to summarize the following based on this history:
+        query: str = f"""
+You will be given the history of a past experience in which you were placed in an environment and given a task to complete. You need to summarize the following based on this history:
 
-KNOWN OBS: Describes the known perceptions of the environment. For example, what exists in the environment and where.
-MY ACTIONS: Describes the actions you have taken. The descriptions of specific actions should match the history. If there is a series of similar actions that lead to the same consequences, some simplification can be made.
-REFLECTION: Describes the experiences or lessons learned in this history, guiding yourself to complete the task or complete it in fewer steps.
+KNOWN OBS: Your understanding of the current environment. This includes two aspects: first, the location where objects are placed within the current environment; second, the functions of some items. For example, the sink basin can be used to clean lettuce, and the fridge can be used to cool a mug.
+
+MY ACTIONS: Compact representation of actions. According to the original execution order, ignore the thought process inside and only retain the action steps. If there are adjacent actions of the same type, some simplification can be made.
+
+REFLECTION: {"A list of key actions. A list of key actions refers to actions that you believe are essential for task completion; removing any of these actions would affect the completion of the task." 
+if is_success else
+'''Provide different outputs based on the type of failure: 
+1.Planning Failure: The task planning steps have issues, such as missing steps or misunderstandings of the task. Output the current planning issues and a correct plan for the current task.
+2.Search Failure: Continuously searching for a target but unable to find it. Output the positions already searched and the next step in the search plan.
+3.Operation Failure: The expected feedback was not received after performing the action, such as "nothing happens." Reflect on whether the current state matches the current action. For example, attempting to take something from cabinet 1 while at the location of cabinet 4. Output this reflection.
+'''
+
+}
+
+Here are some examples:
 
 {fewshots}
 
+Here is the history:
 
 {scenario}"""
 

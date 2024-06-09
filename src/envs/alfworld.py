@@ -38,6 +38,17 @@ class AlfworldEnv:
     
     def close(self):
         self.env.close()
+        
+    def action_parser(self, action):
+        if ">" in action:
+            action = action.replace(">", "").strip()
+        action_words = action.split(" ")
+        if "put" in action_words:
+            for i in range(len(action_words)):
+                if action_words[i].strip().lower() == "in" or action_words[i].strip().lower() == 'on':
+                    action_words[i] = "in/on"
+                    action = " ".join(action_words)
+        return action
 
 
 def process_ob(ob):
