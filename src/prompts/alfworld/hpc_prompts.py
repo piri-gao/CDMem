@@ -30,9 +30,9 @@ MY ACTIONS: Compact representation of actions. According to the original executi
 REFLECTION: {"A list of key actions. A list of key actions refers to actions that you believe are essential for task completion; removing any of these actions would affect the completion of the task." 
 if is_success else
 '''Provide different outputs based on the type of failure: 
-1.Planning Failure: The task planning steps have issues, such as missing steps or misunderstandings of the task. Output the current planning issues and a correct plan for the current task.
-2.Search Failure: Continuously searching for a target but unable to find it. Output the positions already searched and the next step in the search plan.
-3.Operation Failure: The expected feedback was not received after performing the action, such as "nothing happens." Reflect on whether the current state matches the current action. For example, attempting to take something from cabinet 1 while at the location of cabinet 4. Output this reflection.
+Planning Failure: The task planning steps have issues, such as missing steps or misunderstandings of the task. Output the current planning issues and a correct plan for the current task.
+Search Failure: Continuously searching for a target but unable to find it. Output the positions already searched and the next step in the search plan.
+Operation Failure: The expected feedback was not received after performing the action, such as "nothing happens." Reflect on whether the current state matches the current action. For example, attempting to take something from cabinet 1 while at the location of cabinet 4. Output this reflection.
 '''
 
 }

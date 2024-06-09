@@ -119,7 +119,7 @@ class HPCAgent:
             local_memories = local_memories[-3:]
         env_description, task_description = self.process_before_infer(init_ob)
         known_obs_history, action_guidance_history = self.global_memory.recall(env_description , task_description)
-        fewshots = self.fewshot_builder.get_inference_fewshots(self.env.name, self.global_memory, )
+        fewshots = self.fewshot_builder.get_inference_fewshots(self.env.name, env_description , task_description, self.global_memory, self.logging_dir)
         query = self.prompt_builder.get_inference_prompts(init_ob, fewshots, local_memories, short_memories, known_obs_history, action_guidance_history)
         return query
         

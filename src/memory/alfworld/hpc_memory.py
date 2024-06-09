@@ -60,7 +60,7 @@ class LocalMemory:
         return self.history[idx]['memory']
 
 class GlobalMemory:
-    def __init__(self, env_batch_size = 3, task_batch_size = 10):
+    def __init__(self, env_batch_size = 3, task_batch_size = 5):
         self.env_memory = dict()
         self.task_memory = dict()
         self.env_bs = env_batch_size
