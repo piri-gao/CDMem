@@ -23,7 +23,7 @@ class HPCPromptBuilder:
         query: str = f"""
 You will be given the history of a past experience in which you were placed in an environment and given a task to complete. You need to summarize the following based on this history:
 
-KNOWN OBS: Your understanding of the current environment. This includes two aspects: first, the location where objects are placed within the current environment; second, the functions of some items. For example, the sink basin can be used to clean lettuce, and the fridge can be used to cool a mug.
+KNOWN OBS: The functions of some items. For example, the sink basin can be used to clean lettuce, and the fridge can be used to cool a mug.
 
 MY ACTIONS: Compact representation of actions. According to the original execution order, ignore the thought process inside and only retain the action steps. If there are adjacent actions of the same type, some simplification can be made.
 
