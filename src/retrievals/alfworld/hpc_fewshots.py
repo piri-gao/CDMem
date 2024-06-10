@@ -21,11 +21,6 @@ class HPCFewshotBuilder:
     def __init__(self):
         pass
     
-    # def get_inference_fewshots(self, name, env_description , task_description, global_memory, logging_dir):
-    #     for i, (k, v) in enumerate(PREFIXES.items()):
-    #         if name.startswith(k):
-    #             return d[f'react_{v}_1'] + d[f'react_{v}_0']
-    
     def get_inference_fewshots(self, name, env_description , task_description, global_memory, logging_dir):
         num_examples = 2
         example_ids = []
@@ -68,9 +63,7 @@ class HPCFewshotBuilder:
             default_examples = ''.join(default_examples)
             examples.append(default_examples)
         return '\n'.join(examples)
-            
-        
-                    
+                         
     def _ids2example(self, logging_dir, example_idx):
         env_idx, trial_idx = example_idx
         trial_path = os.path.join(logging_dir, f'trial_{trial_idx}.log')
@@ -79,8 +72,6 @@ class HPCFewshotBuilder:
         example_log = trial_log.split('#####\n\n#####')[env_idx].split("Here is the task:")[-1].strip().replace("\n\nSTATUS: OK\n\n#####", '')
         return example_log
 
-                
-    
     def _default_inference_fewshots(self, name):
         for i, (k, v) in enumerate(PREFIXES.items()):
             if name.startswith(k):
