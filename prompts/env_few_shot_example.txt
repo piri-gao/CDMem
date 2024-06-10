@@ -1,9 +1,20 @@
-You have conducted multiple explorations in an environment and gathered some experiences related to it. Now, you need to summarize these experiences, forming a union of the multiple experiences, to better guide future explorations of this environment.
-Here are these experiences:
-Experience #0: Cabinet 1 contains a cloth 2. Cabinet 2 contains a cloth 3 and a soapbottle 2. Cabinet 3 contains a cloth 1 and a toiletpaper 2. Cabinet 4 contains a candle 2, a soapbottle 3, and a spraybottle 1.
-Experience #1: Cabinet 1 contains a cloth 2. Sinkbasin 1 and Sinkbasin 2 are empty. Towelholder 1 contains a towel 1.
-Experience #2: Sinkbasin 1 and Sinkbasin 2 are empty. Countertop 1 contains a candle 3, a candle 1, a soapbottle 1, and a spraybottle 2. Handtowelholder 1 contains a handtowel 1. 
-Now write your summary with these experiences:
+You have explored in various environments and gained some experiences about the functions of certain items. Please summarize the functions of these items based on your experiences.
+Here are these experiences you should summary:
+Experience #0: countertop 1 has a creditcard 1 and a peppershaker 1. countertop 3 has a cup 2, a egg 1, a fork 1, a houseplant 1. garbagecan 1 has a soapbottle 2, and a tomato 3. microwave can heat egg.
+Experience #1: drawer 2 has a cellphone 2 and a creditcard 1, drawer 4 has a pen 1, drawer 6 has a creditcard 2, shelf 3 has a desklamp 1, shelf 4 has an alarmclock 2 and an alarmclock 1. Drawer can be opened.
+Experience #2: drawer 4 has a book 3, and a cellphone 3. drawer 6 has a creditcard 2, and a pen 3. desk 1 has a alarmclock 2, a cellphone 2, a desklamp 1, a keychain 2, a mug 1, and a pencil 3. Desklamp can be turned on.
+At the same time, you need to refer to your past summaries of this environments: sinkbasin can clean mug, fridge can cool egg, shelf can be opened.
+Now write your summary with these experiences and past summaries: 
 
-Cabinet 1 contains a cloth 2. Cabinet 2 contains a cloth 3 and a soapbottle 2. Cabinet 3 contains a cloth 1 and a toiletpaper 2. Cabinet 4 contains a candle 2, a soapbottle 3, and a spraybottle 1. Countertop 1 contains a candle 3, a candle 1, a soapbottle 1, and a spraybottle 2. Handtowelholder 1 contains a handtowel 1. Sinkbasin 1 and Sinkbasin 2 are empty.
+sinkbasin can clean mug, fridge can cool egg, microwave can heat egg, drawer and shelf can be opened, desklamp can be turned on.
 
+
+You have explored in various environments and gained some experiences about the functions of certain items. Please summarize the functions of these items based on your experiences.
+Here are these experiences you should summary:
+Experience #0: Cabinet 1 has a soapbottle 2, cabinet 3 has a cloth 1, cabinet 4 has a candle 2 and a soapbottle 3, countertop 1 has a candle 3, a candle 1, a soapbottle 1, a spraybottle 2, and a toiletpaper 2. Handtowelholder 1 has a handtowel 1. Sinkbasin can clean soapbar.
+Experience #1: shelf 1 has nothing, shelf 2 has a mug 1, shelf 3 has a desklamp 1, shelf 4 has an alarmclock 1. desk 1 has a desklamp 1 and a pencil 1. Drawer 2 has a cellphone 3. Drawer 1 and Drawer 4 can be opened.
+Experience #2: The countertop 3 has a variety of items including an apple 3, a bowl 3, a bowl 2, a bread 1, a butterknife 1, a creditcard 3, a egg 1, a glassbottle 3, a glassbottle 2, a houseplant 1, a lettuce 2, a pot 1, a saltshaker 3, a spoon 1, a statue 2, a tomato 2, and a tomato 1. fridge can cool bread.
+At the same time, you need to refer to your past summaries of this environments: microwave can heat egg, fridge can cool egg.
+Now write your summary with these experiences and past summaries:
+
+microwave can heat egg, sinkbasin can clean soapbar, drawers can be opened, fridge can cool items.

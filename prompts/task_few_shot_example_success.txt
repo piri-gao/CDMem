@@ -1,0 +1,54 @@
+You have performed multiple PUT tasks. Now, based on your previous experiences of success with this task, please summarize a concise planning guide regarding this task. An action guide should serve as a planning guide for this type of task, including what to do in the first step, the second step, and so on.
+Each experience includes the following content:
+
+Specific Task: The particular task content, which is a type of PUT.
+Your Actions: The actions you took in this experience.
+Result: True for success, False for failure.
+Reflection: Reflection about this experince.
+
+Here are these experiences:
+Experience #0: 
+Specific Task: put a clean mug in coffeemachine.
+Your Actions: I go to countertop 1, go to countertop 2, take mug 3 from countertop 2, go to sinkbasin 1, clean mug 3 with sinkbasin 1, go to coffeemachine 1, put mug 3 in/on coffeemachine 1.
+Result: True
+Reflection: Key actions are go to countertop 2, take mug 3 from countertop 2, go to sinkbasin 1, clean mug 3 with sinkbasin 1, go to coffeemachine 1, put mug 3 in/on coffeemachine 1.
+
+Experience #1: 
+Specific Task: put two soapbar in garbagecan.
+Your Actions:  I go to cabinet(1-4), take soapbar 1 from cabinet 4, go to garbagecan 1, put soapbar 1 in/on garbagecan 1, go to countertop(1-2), take soapbar 2 from countertop 2, go to garbagecan 1, put soapbar 2 in/on garbagecan 1.
+Result: True
+Reflection: Key actions are go to cabinet 4, take soapbar 1 from cabinet 4, go to garbagecan 1, put soapbar 1 in/on garbagecan 1, go to countertop 2, take soapbar 2 from countertop 2, go to garbagecan 1, put soapbar 2 in/on garbagecan 1.
+At the same time, you need to refer to your past summaries of this task: 
+1. To complete 'put a hot something in somewhere' task, I should first find something, then take it to microwave to heat it, at last to put it in/on somewhere.
+
+Remember your summary should not exceed five points, so choose the ones you consider most important. Now write your summary with these experiences:
+
+1. To complete 'put a clean something in somewhere' task, I should first find something, then take it to sinkbasin to clean it, at last to put it in/on somewhere.
+2. To complete 'put two thing in somewhere', firstly, I should find the first one, take it, and put it in/on somewhere, then I should do the same process for the second one.
+3. To complete 'put a hot something in somewhere' task, I should first find something, then take it to microwave to heat it, at last to put it in/on somewhere.
+
+
+You have performed multiple HEAT_PUT tasks. Now, based on your previous experiences of success with this task, please summarize a concise planning guide regarding this task. An action guide should serve as a planning guide for this type of task, including what to do in the first step, the second step, and so on.
+Each experience includes the following content:
+
+Specific Task: The particular task content, which is a type of HEAT_PUT.
+Your Actions: The actions you took in this experience.
+Result: True for success, False for failure.
+Reflection: Reflection about this experince.
+
+Here are these experiences:
+Experience #0: 
+Specific Task: heat some tomato and put it in garbagecan.
+Your Actions: I go to fridge 1, open fridge 1, go to countertop 1, go to countertop 2, go to countertop 3, take tomato 1 from countertop 3, go to microwave 1, heat tomato 1 with microwave 1, go to garbagecan 1, put tomato 1 in/on garbagecan 1.
+Result: True
+Reflection: Key actions are go to fridge 1, open fridge 1, take tomato 1 from countertop 3, heat tomato 1 with microwave 1, put tomato 1 in/on garbagecan 1.
+
+Experience #1: 
+Specific Task: heat some apple and put it in fridge.
+Your Actions: I go to fridge 1, open fridge 1, go to countertop 1, take apple 1 from countertop 1, go to microwave 1, heat apple 1 with microwave 1, go to fridge 1, put apple 1 in/on fridge 1.
+Result: True
+Reflection: Key actions are go to countertop 1, take apple 1 from countertop 1, heat apple 1 with microwave 1, put apple 1 in/on fridge 1.
+
+Remember your summary should not exceed five points, so choose the ones you consider most important. Now write your summary with these experiences:
+
+1. To complete 'heat something and put it in somewhere' task, I should first find something, then heat it with microwave, put it in/on somewhere at last.

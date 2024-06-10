@@ -23,10 +23,8 @@ class HPCPromptBuilder:
         query: str = f"""
 You will be given the history of a past experience in which you were placed in an environment and given a task to complete. You need to summarize the following based on this history:
 
-KNOWN OBS: The functions of some items. For example, the sink basin can be used to clean lettuce, and the fridge can be used to cool a mug.
-
+KNOWN OBS: Your understanding of the current environment. This includes two aspects: first, the location where objects are placed within the current environment; second, the functions of some items. For example, the sink basin can be used to clean lettuce, and the fridge can be used to cool a mug.
 MY ACTIONS: Compact representation of actions. According to the original execution order, ignore the thought process inside and only retain the action steps. If there are adjacent actions of the same type, some simplification can be made.
-
 REFLECTION: {"A list of key actions. A list of key actions refers to actions that you believe are essential for task completion; removing any of these actions would affect the completion of the task." 
 if is_success else
 '''Provide different outputs based on the type of failure: 
@@ -37,7 +35,7 @@ Operation Failure: The expected feedback was not received after performing the a
 
 }
 
-Here are some examples:
+Here are {"two" if is_success else "three"} examples:
 
 {fewshots}
 
@@ -54,21 +52,11 @@ Here is the history:
         query += '\nNow write your summary with KNOWN OBS, MY ACTIONS and REFLECTION'
         return query
     
-    def get_summary_prompts(self, known_obs_history, action_guidance_history, env_fewshots, task_fewshots):
-        env_prompt = task_prompt = None
-        if len(known_obs_history) > 0:
-            env_prompt = self._env_summary_prompts(known_obs_history, env_fewshots)
-        if len(action_guidance_history) > 0:
-            task_prompt = self._task_summary_prompts(action_guidance_history, task_fewshots)
-        return env_prompt, task_prompt
-    
-    def _env_summary_prompts(self, known_obs_history, env_fewshots):
+    def env_summary_prompts(self, known_obs_history, env_fewshots):
         known_obs = known_obs_history['known_obs']
         increment_known_obs = known_obs_history['increment_known_obs']
-        if known_obs:
-            increment_known_obs.append(known_obs)
-        query = f"""You have conducted multiple explorations in an environment and gathered some experiences related to it. Now, you need to summarize these experiences, forming a union of the multiple experiences, to better guide future explorations of this environment.
-Here is one example:
+        query = f"""You have explored in various environments and gained some experiences about the functions of certain items. Please summarize the functions of these items based on your experiences.
+Here are two examples:
 
 {env_fewshots}
 
@@ -76,22 +64,29 @@ Here are these experiences you should summary:
         """
         for i, m in enumerate(increment_known_obs):
             query += f'Experience #{i}: {m}\n'
-        query += '\nNow write your summary with these experiences:'
+        if known_obs:
+            query += f'At the same time, you need to refer to your past summaries of this environments: {known_obs}'
+            query += '\nNow write your summary with these experiences and past summaries:'
+        else:
+            query += '\nNow write your summary with these experiences:'
         return query
         
-    def _task_summary_prompts(self, action_guidance_history, task_fewshots):
+    def task_summary_prompts(self, action_guidance_history, task_fewshots, is_success):
         task_type = action_guidance_history['task_type'].upper()
         action_guidance = action_guidance_history['action_guidance']
         increment_action_guidance = action_guidance_history['increment_action_guidance']
-        query = f"""You have performed multiple {task_type} tasks. Now, based on your previous experiences with this task, please summarize a concise action guide for future actions regarding this task. This guide should include successful experiences and lessons learned from failures to help you achieve better results in future tasks.
-        Each experience includes the following content:
+        if is_success:
+            query = f"""You have performed multiple {task_type} tasks. Now, based on your previous experiences of success with this task, please summarize a concise planning guide regarding this task. An action guide should serve as a planning guide for this type of task, including what to do in the first step, the second step, and so on."""
+        else:
+            query = f"""You have performed multiple {task_type} tasks. Now, based on your previous experiences of failure with this task, Please summarize the precautions to avoid these failures. """
+        query += f"""Each experience includes the following content:
 
-Specific Task: The particular task content, which is a type of {task_type}.
+Specific Task: The particular task content, which is a type of {task_type} task.
 Your Actions: The actions you took in this experience.
 Result: True for success, False for failure.
 Reflection: Reflection about this experince.
 
-Here is one example:
+Here are two examples:
 
 {task_fewshots}
 

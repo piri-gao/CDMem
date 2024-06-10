@@ -135,11 +135,13 @@ class HPCAgent:
         env_query = task_query = ''
         increment_env, increment_task = \
                 self.global_memory.short2long(self.logging_dir, expert_trajectory, env_idx, trial_idx)
-        if len(increment_env) != 0 or len(increment_task) != 0:
+        is_success = expert_trajectory['is_success']
+        if len(increment_env) != 0:
             env_fewshots = self.fewshot_builder.get_summary_fewshots('env')
-            task_fewshots = self.fewshot_builder.get_summary_fewshots('task')
-            env_query, task_query = self.prompt_builder.get_summary_prompts(increment_env, increment_task,
-                                                                            env_fewshots, task_fewshots)
+            env_query = self.prompt_builder.env_summary_prompts(increment_env, env_fewshots)
+        if len(increment_task) != 0:
+            task_fewshots = self.fewshot_builder.get_summary_fewshots('task', is_success)
+            task_query = self.prompt_builder.task_summary_prompts(increment_task, task_fewshots, is_success)
         return env_query, task_query
     
     def process_after_reflection(self, reflection_result, history_log, is_success):

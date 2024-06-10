@@ -1,6 +1,8 @@
 from typing import List, Dict, Any
 import os
 import json
+from openai import OpenAI
+import numpy as np
 
 class ShortMemory:
     def __init__(self) -> None:
@@ -166,9 +168,9 @@ class GlobalMemory:
                     task_recall += self.task_memory[task_type]['fail']['action_guidance']
         return env_recall , task_recall
     
-    def _get_samples(self, logging_dir, increment_traj):
+    def _get_samples(self, logging_dir, trajs):
         samples = []
-        for retrieve_idx in increment_traj:
+        for retrieve_idx in trajs:
             sample_trial_idx = retrieve_idx['trial_idx']
             sample_env_idx = retrieve_idx['env_idx']
             sample_path = os.path.join(logging_dir, f'local_memory_trial_{sample_trial_idx}.json')
@@ -178,6 +180,4 @@ class GlobalMemory:
         return samples
         
 
-            
-    
-    
+
