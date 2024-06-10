@@ -34,7 +34,7 @@ class HPCAgent:
         self.llm = llm_wrapper(model)
         self.short_memory = short_memory()
         self.local_memory = local_memory(num_envs)
-        self.global_memory = global_memory()
+        self.global_memory = global_memory(logging_dir)
         self.prompt_builder = prompt_builder()
         self.fewshot_builder = fewshot_builder()
         self.logger = Logger(self.logging_dir, self.num_trials, self.num_envs, self.local_memory, self.global_memory)
@@ -134,7 +134,7 @@ class HPCAgent:
     def build_summary_prompt(self, expert_trajectory, env_idx, trial_idx):
         env_query = task_query = ''
         increment_env, increment_task = \
-                self.global_memory.short2long(self.logging_dir, expert_trajectory, env_idx, trial_idx)
+                self.global_memory.short2long(expert_trajectory, env_idx, trial_idx)
         is_success = expert_trajectory['is_success']
         if len(increment_env) != 0:
             env_fewshots = self.fewshot_builder.get_summary_fewshots('env')

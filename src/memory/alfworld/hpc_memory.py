@@ -62,13 +62,15 @@ class LocalMemory:
         return self.history[idx]['memory']
 
 class GlobalMemory:
-    def __init__(self, env_batch_size = 3, task_batch_size = 5):
+    def __init__(self, logging_dir, env_batch_size = 3, task_batch_size = 5):
         self.env_memory = dict()
         self.task_memory = dict()
         self.env_bs = env_batch_size
         self.task_bs = task_batch_size
+        self.logging_dir = logging_dir
+        self.embed_model = EmbedModel()
     
-    def short2long(self, logging_dir, expert_trajectory, env_idx, trial_idx): 
+    def short2long(self, expert_trajectory, env_idx, trial_idx): 
         increment_env, increment_task = {}, {}
         env_description = expert_trajectory['env']
         task_description = expert_trajectory['task']
@@ -88,7 +90,7 @@ class GlobalMemory:
         self.env_memory[env_description]['all_traj'].append(retrieve_idx)
         # 属于好奇心或重复，取出增量记忆进行反思  
         if env_curiocity or len(self.env_memory[env_description]['increment_traj']) > self.env_bs:
-            samples = self._get_samples(logging_dir, self.env_memory[env_description]['increment_traj'])
+            samples = self._get_samples(self.env_memory[env_description]['increment_traj'])
             increment_known_obs = [sample['known_obs'] for sample in samples]
             increment_env = dict(known_obs=self.env_memory[env_description]['known_obs'],
                                     increment_known_obs=increment_known_obs)
@@ -109,7 +111,7 @@ class GlobalMemory:
 
         # 属于好奇心或重复，取出增量记忆进行反思  
         if task_curiocity or len(self.task_memory[task_type][status]['increment_traj']) > self.task_bs:
-            samples = self._get_samples(logging_dir, self.task_memory[task_type][status]['increment_traj'])
+            samples = self._get_samples(self.task_memory[task_type][status]['increment_traj'])
             increment_action_guidance = [(dict(
                                                 task=sample['task'],
                                                 my_actions=sample["my_actions"],
@@ -162,22 +164,69 @@ class GlobalMemory:
         if task_description:
             task_type = self._convert_task_description(task_description)
             if task_type in self.task_memory:
+                item_idx = 1
                 if 'success' in self.task_memory[task_type]:
-                    task_recall += self.task_memory[task_type]['success']['action_guidance']
+                    repeat_scores = []
+                    split_summary = self._split_summary(self.task_memory[task_type]['success']['action_guidance'])
+                    samples = self._get_samples(self.task_memory[task_type]['success']['all_traj'])
+                    sample_reflections = [item for sample in samples for item in sample["memory"]]
+                    for summary_item in split_summary:
+                        repeat_scores.append(self.embed_model.cal_repeat_score(summary_item, sample_reflections))
+                    for i in range(len(split_summary)):
+                        task_recall += f"{item_idx}. {split_summary[i]} Repeat Score:{round(repeat_scores[i],2)}\n"
+                        item_idx += 1
                 if 'fail' in self.task_memory[task_type]:
-                    task_recall += self.task_memory[task_type]['fail']['action_guidance']
+                    repeat_scores = []
+                    split_summary = self._split_summary(self.task_memory[task_type]['fail']['action_guidance'])
+                    samples = self._get_samples(self.task_memory[task_type]['fail']['all_traj'])
+                    sample_reflections = [item for sample in samples for item in sample["memory"]]
+                    for summary_item in split_summary:
+                        repeat_scores.append(self.embed_model.cal_repeat_score(summary_item, sample_reflections))
+                    for i in range(len(split_summary)):
+                        task_recall += f"{item_idx}. {split_summary[i]} Repeat Score:{round(repeat_scores[i],2)}\n"
+                        item_idx += 1
         return env_recall , task_recall
     
-    def _get_samples(self, logging_dir, trajs):
+    def _get_samples(self, trajs):
         samples = []
         for retrieve_idx in trajs:
             sample_trial_idx = retrieve_idx['trial_idx']
             sample_env_idx = retrieve_idx['env_idx']
-            sample_path = os.path.join(logging_dir, f'local_memory_trial_{sample_trial_idx}.json')
+            sample_path = os.path.join(self.logging_dir, f'local_memory_trial_{sample_trial_idx}.json')
             with open(sample_path, 'r') as f:
                 sample_list = json.load(f)
             samples.append(sample_list[sample_env_idx])
         return samples
+
+    def _split_summary(self, summary):
+        lines = summary.split('\n')
+        result = [line.split('. ', 1)[1] for line in lines]
+        return result
         
 
-
+class EmbedModel:
+    def __init__(self):
+        self.client = OpenAI(
+        base_url=os.getenv('OPENAI_API_BASE_URL') if 'OPENAI_API_BASE_URL' in os.environ else None,
+        api_key=os.getenv('OPENAI_API_KEY'),
+        )
+        
+    def get_embedding(self, text, model="text-embedding-3-small"):
+        return self.client.embeddings.create(input=text, model=model).data[0].embedding
+    
+    def cosine_similarity(self, embedding_1, embedding_2):
+        embedding_1 = np.array(embedding_1)
+        embedding_2 = np.array(embedding_2)
+        dot_product = np.dot(embedding_1, embedding_2)
+        norm_1 = np.linalg.norm(embedding_1)
+        norm_2 = np.linalg.norm(embedding_2)
+        similarity = dot_product / (norm_1 * norm_2)
+        return similarity
+    
+    def cal_repeat_score(self, summary, reflection_list):
+        sim_score_list = []
+        summary_embed = self.get_embedding(summary)
+        for reflection in reflection_list:
+            reflection_embed = self.get_embedding(reflection)
+            sim_score_list.append(self.cosine_similarity(summary_embed, reflection_embed))
+        return sum(sim_score_list)
