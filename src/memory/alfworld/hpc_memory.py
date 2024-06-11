@@ -113,11 +113,6 @@ class GlobalMemory:
             task_curiocity = True
         self.task_memory[task_type][status]['increment_traj'].append(retrieve_idx)
         self.task_memory[task_type][status]['all_traj'].append(retrieve_idx)
-        samples = self._get_samples(self.task_memory[task_type][status]['increment_traj'])
-        ids = [str(traj['trial_idx']) + '_' + str(traj['env_idx']) for traj in self.task_memory[task_type][status]['increment_traj']]
-        sample_reflections = [sample["memory"][-1] for sample in samples]
-        sample_reflection_embeddings = [self.db.get_embedding(reflection) for reflection in sample_reflections]
-        self.task_db[task_type][status].add(embeddings=sample_reflection_embeddings,ids=ids)
 
         # 属于好奇心或重复，取出增量记忆进行反思  
         if task_curiocity or len(self.task_memory[task_type][status]['increment_traj']) > self.task_bs:
@@ -133,6 +128,12 @@ class GlobalMemory:
                                     action_guidance=self.task_memory[task_type][status]['action_guidance'],
                                     increment_action_guidance=increment_action_guidance
                                     )
+        # 计算increment traj的embedding
+            samples = self._get_samples(self.task_memory[task_type][status]['increment_traj'])
+            ids = [str(traj['trial_idx']) + '_' + str(traj['env_idx']) for traj in self.task_memory[task_type][status]['increment_traj']]
+            sample_reflections = [sample["memory"][-1] for sample in samples]
+            sample_reflection_embeddings = [self.db.get_embedding(reflection) for reflection in sample_reflections]
+            self.task_db[task_type][status].add(embeddings=sample_reflection_embeddings,ids=ids)
             self.task_memory[task_type][status]['increment_traj'] = []
         return increment_env, increment_task
             
@@ -186,7 +187,7 @@ class GlobalMemory:
                         repeat_score = 1 / sum(results['distances'][0])
                         repeat_scores.append(repeat_score)
                     for i in range(len(split_summary)):
-                        task_recall += f"{item_idx}. {split_summary[i]} {{round(repeat_scores[i],2)}}\n"
+                        task_recall += f"{item_idx}. {split_summary[i]} {round(repeat_scores[i],2)}\n"
                         item_idx += 1
                 if 'fail' in self.task_memory[task_type]:
                     repeat_scores = []
@@ -199,7 +200,7 @@ class GlobalMemory:
                         repeat_score = 1 / sum(results['distances'][0])
                         repeat_scores.append(repeat_score)
                     for i in range(len(split_summary)):
-                        task_recall += f"{item_idx}. {split_summary[i]} {{round(repeat_scores[i],2)}}\n"
+                        task_recall += f"{item_idx}. {split_summary[i]} {round(repeat_scores[i],2)}\n"
                         item_idx += 1
         return env_recall , task_recall
     

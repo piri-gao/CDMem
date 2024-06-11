@@ -21,6 +21,11 @@ class HPCFewshotBuilder:
     def __init__(self):
         pass
     
+    # def get_inference_fewshots(self, name, env_description , task_description, global_memory, logging_dir):
+    #     for i, (k, v) in enumerate(PREFIXES.items()):
+    #         if name.startswith(k):
+    #             return d[f'react_{v}_1'] + d[f'react_{v}_0']
+    
     def get_inference_fewshots(self, name, env_description , task_description, global_memory, logging_dir):
         num_examples = 2
         example_ids = []
