@@ -12,7 +12,7 @@ class HPCPromptBuilder:
         if known_obs_history:
             query += f'\nKnown information about current environment:\n {known_obs_history}'
         if action_guidance_history:
-            query += f'\nAction guidance about the task:\n{action_guidance_history}'
+            query += f'\nAction guidance about the task, notice that the number enclosed in {{}} at the end of each item with higher values indicating greater importance.:\n{action_guidance_history}.'
         query += f"\nHere is the task:\n{init_ob}"
         query += short_memories
         return query    

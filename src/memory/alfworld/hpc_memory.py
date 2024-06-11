@@ -3,6 +3,8 @@ import os
 import json
 from openai import OpenAI
 import numpy as np
+import chromadb
+from chromadb.config import Settings
 
 class ShortMemory:
     def __init__(self) -> None:
@@ -65,10 +67,12 @@ class GlobalMemory:
     def __init__(self, logging_dir, env_batch_size = 3, task_batch_size = 5):
         self.env_memory = dict()
         self.task_memory = dict()
+        self.task_db = dict()
         self.env_bs = env_batch_size
         self.task_bs = task_batch_size
         self.logging_dir = logging_dir
         self.embed_model = EmbedModel()
+        self.db = Vectorizor()
     
     def short2long(self, expert_trajectory, env_idx, trial_idx): 
         increment_env, increment_task = {}, {}
@@ -99,15 +103,22 @@ class GlobalMemory:
         # 判断是否属于好奇心
         if task_type not in self.task_memory:
             self.task_memory[task_type] = {}
+            self.task_db[task_type] = {}
         if status not in self.task_memory[task_type]:
             self.task_memory[task_type][status] = {
                 'action_guidance': '',
                 'increment_traj': [],
                 'all_traj': []
             }
+            self.task_db[task_type][status] = self.db.create_collection(name=task_type + '_' + status)
             task_curiocity = True
         self.task_memory[task_type][status]['increment_traj'].append(retrieve_idx)
         self.task_memory[task_type][status]['all_traj'].append(retrieve_idx)
+        samples = self._get_samples(self.task_memory[task_type][status]['increment_traj'])
+        ids = [str(traj['trial_idx']) + '_' + str(traj['env_idx']) for traj in self.task_memory[task_type][status]['increment_traj']]
+        sample_reflections = [sample["memory"][-1] for sample in samples]
+        sample_reflection_embeddings = [self.db.get_embedding(reflection) for reflection in sample_reflections]
+        self.task_db[task_type][status].add(embeddings=sample_reflection_embeddings,ids=ids)
 
         # 属于好奇心或重复，取出增量记忆进行反思  
         if task_curiocity or len(self.task_memory[task_type][status]['increment_traj']) > self.task_bs:
@@ -167,23 +178,29 @@ class GlobalMemory:
                 item_idx = 1
                 if 'success' in self.task_memory[task_type]:
                     repeat_scores = []
+                    collection = self.task_db[task_type]['success']
                     split_summary = self._split_summary(self.task_memory[task_type]['success']['action_guidance'])
-                    samples = self._get_samples(self.task_memory[task_type]['success']['all_traj'])
-                    sample_reflections = [item for sample in samples for item in sample["memory"]]
                     for summary_item in split_summary:
-                        repeat_scores.append(self.embed_model.cal_repeat_score(summary_item, sample_reflections))
+                        summary_item_embedding = self.db.get_embedding(summary_item)
+                        assert len(self.task_memory[task_type]['success']['all_traj']) == collection.count()
+                        results = collection.query(query_embeddings=summary_item_embedding, n_results=len(self.task_memory[task_type]['success']['all_traj']))
+                        repeat_score = 1 / sum(results['distances'][0])
+                        repeat_scores.append(repeat_score)
                     for i in range(len(split_summary)):
-                        task_recall += f"{item_idx}. {split_summary[i]} Repeat Score:{round(repeat_scores[i],2)}\n"
+                        task_recall += f"{item_idx}. {split_summary[i]} {{round(repeat_scores[i],2)}}\n"
                         item_idx += 1
                 if 'fail' in self.task_memory[task_type]:
                     repeat_scores = []
+                    collection = self.task_db[task_type]['fail']
                     split_summary = self._split_summary(self.task_memory[task_type]['fail']['action_guidance'])
-                    samples = self._get_samples(self.task_memory[task_type]['fail']['all_traj'])
-                    sample_reflections = [item for sample in samples for item in sample["memory"]]
                     for summary_item in split_summary:
-                        repeat_scores.append(self.embed_model.cal_repeat_score(summary_item, sample_reflections))
+                        summary_item_embedding = self.db.get_embedding(summary_item)
+                        assert len(self.task_memory[task_type]['fail']['all_traj']) == collection.count()
+                        results = collection.query(query_embeddings=summary_item_embedding, n_results=len(self.task_memory[task_type]['fail']['all_traj']))
+                        repeat_score = 1 / sum(results['distances'][0])
+                        repeat_scores.append(repeat_score)
                     for i in range(len(split_summary)):
-                        task_recall += f"{item_idx}. {split_summary[i]} Repeat Score:{round(repeat_scores[i],2)}\n"
+                        task_recall += f"{item_idx}. {split_summary[i]} {{round(repeat_scores[i],2)}}\n"
                         item_idx += 1
         return env_recall , task_recall
     
@@ -230,3 +247,19 @@ class EmbedModel:
             reflection_embed = self.get_embedding(reflection)
             sim_score_list.append(self.cosine_similarity(summary_embed, reflection_embed))
         return sum(sim_score_list)
+
+class Vectorizor:
+    def __init__(self):
+        self.embed_client = OpenAI(
+        base_url=os.getenv('OPENAI_API_BASE_URL') if 'OPENAI_API_BASE_URL' in os.environ else None,
+        api_key=os.getenv('OPENAI_API_KEY'),
+        )
+        self.chroma_client = chromadb.Client(settings=Settings(allow_reset=True))
+        self.chroma_client.reset()
+    
+    def get_embedding(self, text, model="text-embedding-3-small"):
+        return self.embed_client.embeddings.create(input=text, model=model).data[0].embedding
+    
+    def create_collection(self, name):
+        collection = self.chroma_client.create_collection(name)
+        return collection
