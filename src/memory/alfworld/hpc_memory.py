@@ -128,7 +128,7 @@ class GlobalMemory:
                                     action_guidance=self.task_memory[task_type][status]['action_guidance'],
                                     increment_action_guidance=increment_action_guidance
                                     )
-        # 计算increment traj的embedding
+        # 计算increment的embedding
             samples = self._get_samples(self.task_memory[task_type][status]['increment_traj'])
             ids = [str(traj['trial_idx']) + '_' + str(traj['env_idx']) for traj in self.task_memory[task_type][status]['increment_traj']]
             sample_reflections = [sample["memory"][-1] for sample in samples]
@@ -182,8 +182,7 @@ class GlobalMemory:
                     split_summary = self._split_summary(self.task_memory[task_type]['success']['action_guidance'])
                     for summary_item in split_summary:
                         summary_item_embedding = self.db.get_embedding(summary_item)
-                        assert len(self.task_memory[task_type]['success']['all_traj']) == collection.count()
-                        results = collection.query(query_embeddings=summary_item_embedding, n_results=len(self.task_memory[task_type]['success']['all_traj']))
+                        results = collection.query(query_embeddings=summary_item_embedding, n_results=collection.count())
                         repeat_score = 1 / sum(results['distances'][0])
                         repeat_scores.append(repeat_score)
                     for i in range(len(split_summary)):
@@ -195,8 +194,7 @@ class GlobalMemory:
                     split_summary = self._split_summary(self.task_memory[task_type]['fail']['action_guidance'])
                     for summary_item in split_summary:
                         summary_item_embedding = self.db.get_embedding(summary_item)
-                        assert len(self.task_memory[task_type]['fail']['all_traj']) == collection.count()
-                        results = collection.query(query_embeddings=summary_item_embedding, n_results=len(self.task_memory[task_type]['fail']['all_traj']))
+                        results = collection.query(query_embeddings=summary_item_embedding, n_results=collection.count())
                         repeat_score = 1 / sum(results['distances'][0])
                         repeat_scores.append(repeat_score)
                     for i in range(len(split_summary)):

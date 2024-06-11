@@ -74,7 +74,7 @@ class HPCFewshotBuilder:
         trial_path = os.path.join(logging_dir, f'trial_{trial_idx}.log')
         with open(trial_path, 'r') as f:
             trial_log = f.read()
-        example_log = trial_log.split('#####\n\n#####')[env_idx].split("Here is the task:")[-1].strip().replace("\n\nSTATUS: OK\n\n#####", '')
+        example_log = trial_log.split('#####\n\n#####')[env_idx].split("Here is the task:")[-1].replace("STATUS: OK", '').replace("#####", '').strip()
         return example_log
 
     def _default_inference_fewshots(self, name):
