@@ -71,7 +71,6 @@ class GlobalMemory:
         self.env_bs = env_batch_size
         self.task_bs = task_batch_size
         self.logging_dir = logging_dir
-        self.embed_model = EmbedModel()
         self.db = Vectorizor()
     
     def short2long(self, expert_trajectory, env_idx, trial_idx): 
@@ -220,34 +219,6 @@ class GlobalMemory:
         result = [line.split('. ', 1)[1] for line in lines]
         return result
         
-
-class EmbedModel:
-    def __init__(self):
-        self.client = OpenAI(
-        base_url=os.getenv('OPENAI_API_BASE_URL') if 'OPENAI_API_BASE_URL' in os.environ else None,
-        api_key=os.getenv('OPENAI_API_KEY'),
-        )
-        
-    def get_embedding(self, text, model="text-embedding-3-small"):
-        return self.client.embeddings.create(input=text, model=model).data[0].embedding
-    
-    def cosine_similarity(self, embedding_1, embedding_2):
-        embedding_1 = np.array(embedding_1)
-        embedding_2 = np.array(embedding_2)
-        dot_product = np.dot(embedding_1, embedding_2)
-        norm_1 = np.linalg.norm(embedding_1)
-        norm_2 = np.linalg.norm(embedding_2)
-        similarity = dot_product / (norm_1 * norm_2)
-        return similarity
-    
-    def cal_repeat_score(self, summary, reflection_list):
-        sim_score_list = []
-        summary_embed = self.get_embedding(summary)
-        for reflection in reflection_list:
-            reflection_embed = self.get_embedding(reflection)
-            sim_score_list.append(self.cosine_similarity(summary_embed, reflection_embed))
-        return sum(sim_score_list)
-
 class Vectorizor:
     def __init__(self):
         self.embed_client = OpenAI(
