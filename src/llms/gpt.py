@@ -1,5 +1,7 @@
 import os
 import sys
+import requests
+import json
 from openai import OpenAI
 from tenacity import (
     retry,
@@ -19,7 +21,7 @@ ChatModel = Literal["gpt-4", "gpt-3.5-turbo"]
 CompleteModel = Literal["gpt-3.5-turbo-instruct"]
 
 class GPTWrapper:
-    def __init__(self, model: Model):
+    def __init__(self, model):
         self.client = OpenAI(
                 base_url=os.getenv('OPENAI_API_BASE_URL') if 'OPENAI_API_BASE_URL' in os.environ else None,
                 api_key=os.getenv('OPENAI_API_KEY'),
@@ -47,36 +49,104 @@ class GPTWrapper:
             import sys
             sys.exit(1)
     
-    @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
+    # @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
     def get_chat(self, prompt: str, model: ChatModel, max_tokens: int, temperature: float = 0.0, 
                     stop_strs: Optional[List[str]] = None, is_batched: bool = False) -> str:
-        messages = [
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ]
-        response = self.client.chat.completions.create(
-            model=model,
-            messages=messages,
-            max_tokens=max_tokens,
-            stop=stop_strs,
-            temperature=temperature,
-        )
-        return response.choices[0].message.content
+        # messages = [
+        #     {
+        #         "role": "user",
+        #         "content": prompt
+        #     }
+        # ]
+        # response = self.client.chat.completions.create(
+        #     model=model,
+        #     messages=messages,
+        #     max_tokens=max_tokens,
+        #     stop=stop_strs,
+        #     temperature=temperature,
+        # )
+        # return response.choices[0].message.content
+        # 定义请求的URL
+        url = "http://172.30.112.1:8001/api/generate"
 
-    @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
+        # 定义请求的数据
+        data = {
+            "model": "qwen2",
+            "prompt": prompt,
+            "max_tokens": max_tokens,
+            "temperature": temperature,
+            "stop_strs": stop_strs,
+            "stream": False
+        }
+
+        # 将数据转换为JSON格式
+        json_data = json.dumps(data)
+
+        # 设置请求头
+        headers = {
+            "Content-Type": "application/json"
+        }
+
+        # 发送POST请求
+        response = requests.post(url, headers=headers, json=data)
+
+        if response.status_code == 200:
+            try:
+                json_str = response.json()
+                # print('\n\n-------- response ---------')
+                # print(json_str['response'])
+                return json_str['response']
+            except ValueError:
+                print("Error parsing JSON response")
+        else:
+            print(f"Request failed with status code {response.status_code}")
+
+    # @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
     def get_completion(self, prompt: str, model: CompleteModel,  max_tokens: int, temperature: float = 0.0, 
                         stop_strs: Optional[List[str]] = None) -> str:
-        response = self.client.completions.create(
-            model=model,
-            prompt=prompt,
-            temperature=temperature,
-            max_tokens=max_tokens,
-            top_p=1,
-            frequency_penalty=0.0,
-            presence_penalty=0.0,
-            stop=stop_strs,
-        )
-        return response.choices[0].text
+        # response = self.client.completions.create(
+        #     model=model,
+        #     prompt=prompt,
+        #     temperature=temperature,
+        #     max_tokens=max_tokens,
+        #     top_p=1,
+        #     frequency_penalty=0.0,
+        #     presence_penalty=0.0,
+        #     stop=stop_strs,
+        # )
+        # return response.choices[0].text
+        # 定义请求的URL
+        url = "http://172.30.112.1:8001/api/generate"
+
+        # 定义请求的数据
+        data = {
+            "model": "qwen2",
+            "prompt": prompt,
+            "max_tokens": max_tokens,
+            "temperature": temperature,
+            "stop_strs": stop_strs,
+            "top_p": 1,
+            "frequency_penalty": 0.0,
+            "presence_penalty": 0.0,
+            "stream": False
+        }
+
+        # 设置请求头
+        headers = {
+            "Content-Type": "application/json"
+        }
+
+        # 发送POST请求
+        response = requests.post(url, headers=headers, json=data)
+
+        if response.status_code == 200:
+            try:
+                json_str = response.json()
+                # print('\n\n-------- response ---------')
+                # print(json_str['response'])
+                return json_str['response']
+            except ValueError:
+                print("Error parsing JSON response")
+        else:
+            print(f"Request failed with status code {response.status_code}")
             

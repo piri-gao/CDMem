@@ -21,9 +21,15 @@ class ForwardHandler(http.server.BaseHTTPRequestHandler):
         headers = {'Content-Type': 'application/json'}
         response = requests.post(OLLAMA_URL, headers=headers, data=post_data)
 
+        print(response.content)
         self.send_response(response.status_code)
+
+        # 处理并转发响应头部
         for key, value in response.headers.items():
-            self.send_header(key, value)
+            # 跳过 'Transfer-Encoding' 头部
+            if key.lower() != 'transfer-encoding':
+                self.send_header(key, value)
+
         self.end_headers()
         self.wfile.write(response.content)
 

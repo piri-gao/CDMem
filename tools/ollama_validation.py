@@ -24,12 +24,24 @@ import json
 url = "http://172.30.112.1:8001/api/generate"
 
 # 定义请求的数据
+# data = {
+#     "model": "qwen2",
+#     "prompt": "Why is the sky blue? Answer with one sentence.",
+#     "stream": False,
+#     "temperature": 0.1
+# }
+
 data = {
-    "model": "qwen2",
-    "prompt": "Why is the sky blue? Answer with one sentence.",
-    "stream": False,
-    "temperature": 0.1
-}
+            "model": "qwen2",
+            "prompt": "Why is the sky blue? Answer with one sentence.",
+            "max_tokens": 1000,
+            "temperature": 0.1,
+            "stop_strs": ['he', 'she', 'him', 'his'],
+            "top_p": 1,
+            "frequency_penalty": 0.0,
+            "presence_penalty": 0.0,
+            "stream": False
+        }
 
 # 将数据转换为JSON格式
 json_data = json.dumps(data)
@@ -43,6 +55,6 @@ headers = {
 response = requests.post(url, headers=headers, data=json_data)
 
 # 打印响应内容
-print(response.status_code)
+# print(response.status_code)
 json_str = response.json()
 print(json_str['response'])
