@@ -46,7 +46,7 @@ class HPCAgent:
             num_additional_successes: int = 0
             for env_idx in range(self.num_envs):
                 init_ob, info = self.env.reset()
-                print(f"using {self.env.name}")
+                print(f"{env_idx} using {self.env.name}")
                 if self.local_memory.is_success(env_idx):
                     num_successes += 1
                     self.logger.log_world_success(trial_idx, env_idx)

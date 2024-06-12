@@ -5,14 +5,14 @@ class HPCPromptBuilder:
     def get_inference_prompts(self, init_ob, fewshots, local_memories, short_memories, known_obs_history, action_guidance_history):
         query = 'Interact with a household to solve a task. You may take maximum of 20 steps. Here are two examples.\n'
         query += fewshots
-        if len(local_memories) > 0:
-            query += '\n\nYour memory for the task below:'
-            for i, m in enumerate(local_memories):
-                query += f'\nTrial {i}:\n{m.strip()}'
         if known_obs_history:
             query += f'\nKnown information about current environment:\n {known_obs_history}'
         if action_guidance_history:
             query += f'\nAction guidance about the task, notice that the number enclosed in {{}} at the end of each item with higher values indicating greater importance.:\n{action_guidance_history}.'
+        if len(local_memories) > 0:
+            query += '\n\nYour memory for the task below:'
+            for i, m in enumerate(local_memories):
+                query += f'\nTrial {i}:\n{m.strip()}'
         query += f"\nHere is the task:\n{init_ob}"
         query += short_memories
         return query    

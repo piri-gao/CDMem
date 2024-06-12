@@ -12,11 +12,15 @@ env = env.init_env(batch_size=1)
 
 # interact
 obs, info = env.reset()
-while True:
-    # get random actions from admissible 'valid' commands (not available for AlfredThorEnv)
-    admissible_commands = list(info['admissible_commands']) # note: BUTLER generates commands word-by-word without using admissible_commands
-    random_actions = [np.random.choice(admissible_commands[0])]
+# while True:
+#     # get random actions from admissible 'valid' commands (not available for AlfredThorEnv)
+#     admissible_commands = list(info['admissible_commands']) # note: BUTLER generates commands word-by-word without using admissible_commands
+#     random_actions = [np.random.choice(admissible_commands[0])]
 
-    # step
-    obs, scores, dones, infos = env.step(random_actions)
-    print("Action: {}, Obs: {}".format(random_actions[0], obs[0]))
+#     # step
+#     obs, scores, dones, infos = env.step(random_actions)
+#     print("Action: {}, Obs: {}".format(random_actions[0], obs[0]))
+for i in range(134):
+    obs, info = env.reset()
+    name = '/'.join(info['extra.gamefile'][0].split('/')[-3:-1])
+    print(name)
