@@ -13,6 +13,7 @@ class HPCPromptBuilder:
             query += '\n\nYour memory for the task below:'
             for i, m in enumerate(local_memories):
                 query += f'\nTrial {i}:\n{m.strip()}'
+        query += "\n\n### You can only output one line, start with'> '. If you do not have a plan, make a plan to guide your future actions. You can only perform one action at a time.\n"
         query += f"\nHere is the task:\n{init_ob}"
         query += short_memories
         return query    
@@ -30,7 +31,8 @@ if is_success else
 '''Provide different outputs based on the type of failure: 
 Planning Failure: The task planning steps have issues, such as missing steps or misunderstandings of the task. Output the current planning issues and a correct plan for the current task.
 Search Failure: Continuously searching for a target but unable to find it. Output the positions already searched and the next step in the search plan.
-Operation Failure: The expected feedback was not received after performing the action, such as "nothing happens." Reflect on whether the current state matches the current action. For example, attempting to take something from cabinet 1 while at the location of cabinet 4. Output this reflection.
+Operation Failure: The expected feedback was not received after performing the action, such as "nothing happens." Reflect on whether you miss some other necessary action. For example, attempting to put something to someplace you should firstly go to that place.
+Output this reflection.
 '''
 
 }

@@ -28,12 +28,12 @@ class GPTWrapper:
                     
     def __call__(self, prompt: str, stop: List[str] = None, max_tokens: int = 256, mode: str = 'chat'):
         try:
-            cur_try = 0
+            cur_try = 1
             while cur_try < 6:
                 if mode == "chat":
-                    text = self.get_chat(prompt=prompt, model=self.model, temperature=cur_try * 0.2, stop_strs=stop, max_tokens=max_tokens)
+                    text = self.get_chat(prompt=prompt, model=self.model, temperature=cur_try * 0.15, stop_strs=stop, max_tokens=max_tokens)
                 elif mode == "complete":
-                    text = self.get_completion(prompt=prompt, model=self.model, temperature=cur_try * 0.2, stop_strs=stop, max_tokens=max_tokens)
+                    text = self.get_completion(prompt=prompt, model=self.model, temperature=cur_try * 0.15, stop_strs=stop, max_tokens=max_tokens)
                 else:
                     raise ValueError(f"Invalid mode: {mode}, mode must be 'chat' or 'complete'.")
                 # dumb way to do this

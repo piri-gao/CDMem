@@ -47,6 +47,8 @@ class HPCAgent:
             for env_idx in range(self.num_envs):
                 init_ob, info = self.env.reset()
                 print(f"{env_idx} using {self.env.name}")
+                # if not init_ob.__contains__('put some vase on safe.') and not info.__contains__('put some vase on safe.'):
+                #     continue
                 if self.local_memory.is_success(env_idx):
                     num_successes += 1
                     self.logger.log_world_success(trial_idx, env_idx)
