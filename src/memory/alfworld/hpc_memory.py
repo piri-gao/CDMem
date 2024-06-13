@@ -138,20 +138,21 @@ class GlobalMemory:
         return increment_env, increment_task
             
     def _convert_task_description(self, task_description):
-        if task_description.startswith("look"):
-            return "look"
-        elif task_description.startswith("put"):
-            return "put"
-        elif task_description.startswith("examine"):
-            return "examine"
-        elif task_description.startswith("cool") and "put" in task_description:
-            return "cool_put"
-        elif task_description.startswith("clean") and "put" in task_description:
-            return "clean_put"
-        elif task_description.startswith("heat") and "put" in task_description:
-            return "heat_put"
-        elif task_description.startswith("find") and "put" in task_description:
-            return "find_put"
+        if "put" in task_description:
+            if "heat" in task_description or "hot" in task_description:
+                return "pick_heat_then_place"
+            elif "clean" in task_description:
+                return "pick_clean_then_place"
+            elif "cool" in task_description:
+                return "pick_cool_then_place"
+            elif "two" in task_description:
+                return "pick_two_obj"
+            else:
+                return "pick_and_place"
+        elif "find two" in task_description:
+            return "pick_two_obj"
+        elif "examine" in task_description or "look at" in task_description:
+            return "look_at_obj"
         else:
             raise ValueError(f"Unseen type: {task_description}")
     
