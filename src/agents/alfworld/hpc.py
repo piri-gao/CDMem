@@ -36,7 +36,9 @@ class HPCAgent:
         self.llm = llm_wrapper(model)
         self.short_memory = short_memory()
         self.local_memory = local_memory(num_envs)
-        self.global_memory = global_memory(logging_dir)
+        if 'is_vector' in kwargs:
+            self.is_vector = kwargs['is_vector']
+        self.global_memory = global_memory(logging_dir, self.is_vector)
         self.prompt_builder = prompt_builder()
         self.fewshot_builder = fewshot_builder()
         self.logger = Logger(self.logging_dir, self.num_trials, self.num_envs, self.start_trial_num, self.local_memory, self.global_memory)

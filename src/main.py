@@ -22,6 +22,7 @@ def get_args():
     parser.add_argument("--model", type=str, help="The model to use. One of `gpt-4`, `gpt-3.5-turbo`, or `text-davinci-003")
     parser.add_argument("--agent", type=str, help="The agent to use. One of `reflect`, `hpc`")
     parser.add_argument("--env", type=str, help="The enviroment to use. One of `alfworld`")
+    parser.add_argument("--is_vector", action='store_true', help="To use vector database")
 
     args = parser.parse_args()
 
@@ -55,7 +56,8 @@ def main(args):
                             local_memory = LOCAL_MEMORY[args.env][args.agent],
                             global_memory = GLOBAL_MEMORY[args.env][args.agent],
                             prompt_builder = PROMPT_BUILDER[args.env][args.agent],
-                            fewshot_builder = FEWSHOT_BUILDER[args.env][args.agent]
+                            fewshot_builder = FEWSHOT_BUILDER[args.env][args.agent],
+                            is_vector=args.is_vector,
                             )
 
     if args.is_resume:

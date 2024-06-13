@@ -64,14 +64,16 @@ class LocalMemory:
         return self.history[idx]['memory']
 
 class GlobalMemory:
-    def __init__(self, logging_dir, env_batch_size = 3, task_batch_size = 5):
+    def __init__(self, logging_dir, is_vector, env_batch_size = 3, task_batch_size = 5):
         self.env_memory = dict()
         self.task_memory = dict()
-        self.task_db = dict()
         self.env_bs = env_batch_size
         self.task_bs = task_batch_size
         self.logging_dir = logging_dir
-        self.db = Vectorizor()
+        self.is_vector = is_vector
+        if self.is_vector:
+            self.task_db = dict()
+            self.db = Vectorizor()
     
     def short2long(self, expert_trajectory, env_idx, trial_idx): 
         increment_env, increment_task = {}, {}
@@ -102,14 +104,16 @@ class GlobalMemory:
         # 判断是否属于好奇心
         if task_type not in self.task_memory:
             self.task_memory[task_type] = {}
-            self.task_db[task_type] = {}
+            if self.is_vector:
+                self.task_db[task_type] = {}
         if status not in self.task_memory[task_type]:
             self.task_memory[task_type][status] = {
                 'action_guidance': '',
                 'increment_traj': [],
                 'all_traj': []
             }
-            self.task_db[task_type][status] = self.db.create_collection(name=task_type + '_' + status)
+            if self.is_vector:
+                self.task_db[task_type][status] = self.db.create_collection(name=task_type + '_' + status)
             task_curiocity = True
         self.task_memory[task_type][status]['increment_traj'].append(retrieve_idx)
         self.task_memory[task_type][status]['all_traj'].append(retrieve_idx)
@@ -129,11 +133,12 @@ class GlobalMemory:
                                     increment_action_guidance=increment_action_guidance
                                     )
         # 计算increment的embedding
-            samples = self._get_samples(self.task_memory[task_type][status]['increment_traj'])
-            ids = [str(traj['trial_idx']) + '_' + str(traj['env_idx']) for traj in self.task_memory[task_type][status]['increment_traj']]
-            sample_reflections = [sample["memory"][-1] for sample in samples]
-            sample_reflection_embeddings = [self.db.get_embedding(reflection) for reflection in sample_reflections]
-            self.task_db[task_type][status].add(embeddings=sample_reflection_embeddings,ids=ids)
+            if self.is_vector:
+                samples = self._get_samples(self.task_memory[task_type][status]['increment_traj'])
+                ids = [str(traj['trial_idx']) + '_' + str(traj['env_idx']) for traj in self.task_memory[task_type][status]['increment_traj']]
+                sample_reflections = [sample["memory"][-1] for sample in samples]
+                sample_reflection_embeddings = [self.db.get_embedding(reflection) for reflection in sample_reflections]
+                self.task_db[task_type][status].add(embeddings=sample_reflection_embeddings,ids=ids)
             self.task_memory[task_type][status]['increment_traj'] = []
         return increment_env, increment_task
             
@@ -177,29 +182,37 @@ class GlobalMemory:
             task_type = self._convert_task_description(task_description)
             if task_type in self.task_memory:
                 item_idx = 1
-                if 'success' in self.task_memory[task_type]:
-                    repeat_scores = []
-                    collection = self.task_db[task_type]['success']
+                if 'success' in self.task_memory[task_type]:        
                     split_summary = self._split_summary(self.task_memory[task_type]['success']['action_guidance'])
-                    for summary_item in split_summary:
-                        summary_item_embedding = self.db.get_embedding(summary_item)
-                        results = collection.query(query_embeddings=summary_item_embedding, n_results=collection.count())
-                        repeat_score = 1 / sum(results['distances'][0])
-                        repeat_scores.append(repeat_score)
+                    if self.is_vector:
+                        repeat_scores = []
+                        collection = self.task_db[task_type]['success']
+                        for summary_item in split_summary:
+                            summary_item_embedding = self.db.get_embedding(summary_item)
+                            results = collection.query(query_embeddings=summary_item_embedding, n_results=collection.count())
+                            repeat_score = 1 / sum(results['distances'][0])
+                            repeat_scores.append(repeat_score)
                     for i in range(len(split_summary)):
-                        task_recall += f"{item_idx}. {split_summary[i]} {round(repeat_scores[i],2)}\n"
+                        if self.is_vector:
+                            task_recall += f"{item_idx}. {split_summary[i]} {round(repeat_scores[i],2)}\n"
+                        else:
+                            task_recall += f"{item_idx}. {split_summary[i]}\n"
                         item_idx += 1
                 if 'fail' in self.task_memory[task_type]:
-                    repeat_scores = []
-                    collection = self.task_db[task_type]['fail']
                     split_summary = self._split_summary(self.task_memory[task_type]['fail']['action_guidance'])
-                    for summary_item in split_summary:
-                        summary_item_embedding = self.db.get_embedding(summary_item)
-                        results = collection.query(query_embeddings=summary_item_embedding, n_results=collection.count())
-                        repeat_score = 1 / sum(results['distances'][0])
-                        repeat_scores.append(repeat_score)
+                    if self.is_vector:
+                        repeat_scores = []
+                        collection = self.task_db[task_type]['fail']
+                        for summary_item in split_summary:
+                            summary_item_embedding = self.db.get_embedding(summary_item)
+                            results = collection.query(query_embeddings=summary_item_embedding, n_results=collection.count())
+                            repeat_score = 1 / sum(results['distances'][0])
+                            repeat_scores.append(repeat_score)
                     for i in range(len(split_summary)):
-                        task_recall += f"{item_idx}. {split_summary[i]} {round(repeat_scores[i],2)}\n"
+                        if self.is_vector:
+                            task_recall += f"{item_idx}. {split_summary[i]} {round(repeat_scores[i],2)}\n"
+                        else:
+                            task_recall += f"{item_idx}. {split_summary[i]}\n"
                         item_idx += 1
         return env_recall , task_recall
     

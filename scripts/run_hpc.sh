@@ -8,7 +8,4 @@ python src/main.py \
         --model "gpt-3.5-turbo"  \
         --agent "hpc"   \
         --env "alfworld" \
-        --is_resume \
-        --resume_dir logs/hpc_logs_t5e67_0613_021630_new \
-        --start_trial_num 1
         
