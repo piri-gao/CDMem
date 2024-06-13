@@ -18,6 +18,7 @@ class HPCAgent:
                  env, 
                  llm_wrapper, 
                  model, 
+                 start_trial_num,
                  short_memory, 
                  local_memory, 
                  global_memory,
@@ -29,6 +30,7 @@ class HPCAgent:
         self.num_envs = num_envs
         self.max_steps = max_steps
         self.logging_dir = logging_dir
+        self.start_trial_num = start_trial_num
         self.env = env()
         self.model = model
         self.llm = llm_wrapper(model)
@@ -37,18 +39,16 @@ class HPCAgent:
         self.global_memory = global_memory(logging_dir)
         self.prompt_builder = prompt_builder()
         self.fewshot_builder = fewshot_builder()
-        self.logger = Logger(self.logging_dir, self.num_trials, self.num_envs, self.local_memory, self.global_memory)
+        self.logger = Logger(self.logging_dir, self.num_trials, self.num_envs, self.start_trial_num, self.local_memory, self.global_memory)
     
     def run(self):
-        for trial_idx in range(self.num_trials):
+        for trial_idx in range(self.start_trial_num, self.num_trials):
             self.logger.log_world_start(trial_idx)
             num_successes: int = 0
             num_additional_successes: int = 0
             for env_idx in range(self.num_envs):
                 init_ob, info = self.env.reset()
                 print(f"{env_idx} using {self.env.name}")
-                # if not init_ob.__contains__('put some vase on safe.') and not info.__contains__('put some vase on safe.'):
-                #     continue
                 if self.local_memory.is_success(env_idx):
                     num_successes += 1
                     self.logger.log_world_success(trial_idx, env_idx)
@@ -203,7 +203,7 @@ class HPCAgent:
     
 
 class Logger:
-    def __init__(self, logging_dir, num_trials, num_envs, local_memory, global_memory):
+    def __init__(self, logging_dir, num_trials, num_envs, start_trial_num, local_memory, global_memory):
         self.logging_dir = logging_dir
         self.num_trials = num_trials
         self.num_envs = num_envs
@@ -214,9 +214,15 @@ class Logger:
         self.local_memory_paths = [os.path.join(self.logging_dir, f'local_memory_trial_{trial_idx}.json') for trial_idx in range(self.num_trials)]
         self.global_env_paths = [os.path.join(self.logging_dir, f'global_env_trial_{trial_idx}.json') for trial_idx in range(self.num_trials)]
         self.global_task_paths = [os.path.join(self.logging_dir, f'global_task_trial_{trial_idx}.json') for trial_idx in range(self.num_trials)]
-        for path in list(itertools.chain(self.trial_log_paths, self.local_memory_paths, self.global_env_paths, self.global_task_paths)):
-            if os.path.exists(path):
-                open(path, 'w').close()
+        if start_trial_num == 0:
+            for path in list(itertools.chain(self.trial_log_paths, self.local_memory_paths, self.global_env_paths, self.global_task_paths)):
+                if os.path.exists(path):
+                    open(path, 'w').close()
+        else:
+            for path in list(itertools.chain(self.trial_log_paths[start_trial_num:], self.local_memory_paths[start_trial_num:], 
+                                             self.global_env_paths[start_trial_num:], self.global_task_paths[start_trial_num:])):
+                if os.path.exists(path):
+                    open(path, 'w').close()
                 
     def log_world_start(self, trial_idx):
         with open(self.world_log_path, 'a') as wf:

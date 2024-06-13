@@ -48,6 +48,7 @@ def main(args):
                             max_steps = args.max_steps,
                             logging_dir=logging_dir,
                             model = args.model,
+                            start_trial_num = args.start_trial_num,
                             env = ENV[args.env],
                             llm_wrapper=LLM_WRAPPER[args.model.split('-')[0]],
                             short_memory = SHORT_MEMORY[args.env][args.agent],
