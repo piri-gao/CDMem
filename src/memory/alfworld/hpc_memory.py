@@ -215,7 +215,7 @@ class GlobalMemory:
 
     def _split_summary(self, summary):
         lines = summary.split('\n')
-        result = [line.split('. ', 1)[1] for line in lines]
+        result = [line.split('. ', 1)[1] for line in lines if len(line.split('. ')) > 1]
         return result
         
 class Vectorizor:

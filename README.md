@@ -3,7 +3,8 @@ To run the project, first refer to `data/alfworld/README.md` for installing the 
 Afterward, configure the Conda environment.
 
 ```
-
+sudo apt install cmake
+sudo apt install g++
 pip install -r requirements.txt
 
  ```
