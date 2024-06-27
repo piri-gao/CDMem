@@ -1,26 +1,34 @@
-You have performed multiple FIND_PUT tasks. Now, based on your previous experiences of failure with this task, Please summarize the precautions to avoid these failures.
-Each experience includes the following content:
+Exemplars #1
 
-Specific Task: The particular task content, which is a type of FIND_PUT.
-Your Actions: The actions you took in this experience.
-Result: True for success, False for failure.
-Reflection: Reflection about this experince.
+***Input***
 
-Here are these experiences:
 Experience #0: 
-Specific Task: find two toiletpaper and put them in cabinet.
-Your Actions:I go to and open cabinet(1-4), go to toiletpaperhanger 1, go to towelholder 1.
-Result: False
+Task: find two toiletpaper and put them in cabinet.
 Reflection: I met Operation Failure. I tried to take toiletpaper from cabinets 1-3, but nothing happened. This is because there is no toiletpaper in these cabinets. I should not take items from containers that do not have the target item. In the next trial, I should continue searching for the toiletpaper in other possible locations, such as drawers or shelves.
-
 Experience #1: 
-Specific Task: find two soapbar and put them in safe.
-Your Actions: I go to drawer(1-5), go to shelf(1-7).
-Result: False
+Task: find two soapbar and put them in safe.
 Reflection: I met Search Failure. In this trial, I checked all drawers and shelves but did not find the soapbar. In the next trial, I should continue searching for the soapbars, starting with a different location like the cabinet or dresser.
 
-Remember your summary should not exceed five points, so choose the ones you consider most important. Now write your summary with these experiences:
+***Summary Result***
 
-1. If I met Operation Failure, trying to take items from a container, I should verify that this container indeed contains this item. f it does not, I should continue searching in other locations.
-2. If I met Search Failure, I should review the places I have already searched and consider going to an unsearched location next to continue my search.
+1. If I plan to take an item from a container, I should verify that this container indeed contains this item. If it does not, I should continue searching in other locations.
+2. If I can not find an item, I should review locations already searched to avoid repeated searches,  then plan the next search location.
 
+Exemplars #2
+
+***Input***
+
+Experience #0: 
+Task: put some vase on safe.
+Reflection: I met Search Failure. I spent too much time checking empty cabinets and drawers without finding a vase. I should have focused on locations where a vase is more likely to be found, such as shelves or sidetables. Additionally, I should have moved on to the next location if the current one was empty, instead of repeatedly checking the same locations. I will prioritize checking locations with higher chances of containing the item I need in the future
+Experience #1: 
+Task: put a soapbar on cabinet.
+Reflection: I met Plan Failure. In this trial, I make a mistake of taking soapbottle instead of soapbar. I should double-check the items I pick up to ensure they match the required items for the task.
+Past Summary:
+1. If I plan to take an item from a container, I should verify that this container indeed contains this item. If it does not, I should continue searching in other locations.
+
+***Summary Result***
+
+1. If I plan to take an item from a container, I should verify that this container indeed contains this item. If it does not, I should continue searching in other locations.
+2. If I can not find an item, I should review locations already searched to avoid repeated searches, then focused on locations where the item more likely to be found.
+3. If I plan to take an item from a container, I should double-check the items I pick up to ensure they match the required items for the task.

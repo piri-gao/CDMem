@@ -65,9 +65,8 @@ class HPCFewshotBuilder:
         if num_examples > 0:
             default_examples = self._default_inference_fewshots(name)
             default_examples = random.sample(default_examples, num_examples)
-            default_examples = ''.join(default_examples)
-            examples.append(default_examples)
-        return '\n'.join(examples)
+            examples.extend(default_examples)
+        return '\n\n'.join(examples)
                          
     def _ids2example(self, logging_dir, example_idx):
         env_idx, trial_idx = example_idx
@@ -81,15 +80,20 @@ class HPCFewshotBuilder:
         for i, (k, v) in enumerate(PREFIXES.items()):
             if name.startswith(k):
                 return [d[f'react_{v}_1'] , d[f'react_{v}_0']]
-                
-    def get_reflection_fewshots(self, is_success):
+        
+    def get_expert_fewshots(self):
         with open("./prompts/expert_few_shot_example.txt", 'r') as f:
             FEW_SHOT_EXAMPLES = f.read()
-        examples = FEW_SHOT_EXAMPLES.split('\n\n\n')
+        return FEW_SHOT_EXAMPLES
+                
+    def get_reflection_fewshots(self, is_success):
         if is_success:
-            return examples[:1]
+            with open("./prompts/reflection_few_shot_example_success.txt", 'r') as f:
+                FEW_SHOT_EXAMPLES = f.read()
         else:
-            return '\n\n\n'.join(examples[2:])
+            with open("./prompts/reflection_few_shot_example_fail.txt", 'r') as f:
+                FEW_SHOT_EXAMPLES = f.read()
+        return FEW_SHOT_EXAMPLES
     
     def get_summary_fewshots(self, mode, is_success=None):
         if mode == 'env':

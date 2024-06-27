@@ -1,0 +1,122 @@
+Exemplar#1:
+
+*** Input ***
+
+You are in the middle of a room. Looking quickly around you, you see a bed 1, a desk 2, a desk 1, a drawer 6, a drawer 5, a drawer 4, a drawer 3, a drawer 2, a drawer 1, a garbagecan 1, a laundryhamper 1, a safe 1, a shelf 6, a shelf 5, a shelf 4, a shelf 3, a shelf 2, and a shelf 1.
+Your task is to: examine the alarmclock with the desklamp.
+> think: To solve the task, I need to find and take an alarmclock, then find and use a desklamp. First I need to find an alarmclock. An alarmclock is more likely to appear in shelf (1-6), desk (1-2), drawer (1-6), bed (1), garbagecan (1), safe (1), laundryhamper (1). I can check one by one, starting with desk 1.
+OK.
+> go to desk 1
+On the desk 1, you see a bowl 1, a desklamp 1, a mug 1, and a pencil 1.
+> go to desk 2
+On the desk 2, you see a alarmclock 1.
+> take alarmclock 1 from desk 2
+You pick up the alarmclock 1 from the desk 2.
+> think: Now I have the alarmclock (1). Next, I need to find a desklamp. A desklamp is more likely to appear in shelf (1-6), desk (1-2), drawer (1-6), bed (1), garbagecan (1), safe (1), laundryhamper (1). I can check one by one, starting with shelf 1.
+OK.
+> go to shelf 1
+On the shelf 1, you see a desklamp 1.
+> take desklamp 1 from shelf 1
+Nothing happens.
+> take desklamp 1 from shelf 1
+Nothing happens.
+
+Expert Observations: desk 1 has a desklamp 1, a mug 1, and a pencil 1. desk 2 has a alarmclock 1. shelf 1 has a desklamp 1.
+Expert Actions: I go to desk (1-2), take alarmclock 1 from desk 2, go to shelf 1, take desklamp 1 from shelf 1.
+
+*** Reflection Result***
+REFLECTION: I met Planning Failure. After I find desklamp, I should not take it. Instead, for examine the alarmclock with the desklamp, I should use it.
+
+
+Exemplar#2:
+
+*** Input ***
+
+You are in the middle of a room. Looking quickly around you, you see a cabinet 4, a cabinet 3, a cabinet 2, a cabinet 1, a countertop 1, a garbagecan 1, a handtowelholder 2, a handtowelholder 1, a sinkbasin 2, a sinkbasin 1, a toilet 1, a toiletpaperhanger 1, and a towelholder 1.
+Your task is to: put two soapbar in garbagecan.
+> think: To solve the task, I need to find and take the first soapbar, then put it in/on the garbagecan, then find and take the second soapbar, then put it in/on the garbagecan.
+OK.
+> think: First I need to find the first soapbar. A soapbar is more likely to appear in cabinet (1-4), countertop (1), handtowelholder (1-2), sinkbasin (1-2), toilet (1), towelholder (1). I can check one by one, starting with cabinet 1.
+OK.
+> go to cabinet 1
+The cabinet 1 is closed.
+> open cabinet 1
+You open the cabinet 1. The cabinet 1 is open. In it, you see a cloth 2.
+> go to cabinet 2
+The cabinet 2 is closed.
+> open cabinet 2
+You open the cabinet 2. The cabinet 2 is open. In it, you see a cloth 3, and a soapbar 1.
+> go to cabinet 3
+The cabinet 3 is closed.
+> open cabinet 3
+You open the cabinet 3. The cabinet 3 is open. In it, you see a cloth 1, and a toiletpaper 2.
+> go to cabinet 4
+The cabinet 4 is closed.
+> open cabinet 4
+You open the cabinet 4. The cabinet 4 is open. In it, you see a candle 2, a soapbottle 3, and a spraybottle 1.
+> think: Now I find the first soapbar (1). Next, I need to take it. I can find the second soapbar (2) later in countertop 1.
+OK.
+> take soapbar 1 from cabinet 2
+Nothing happens.
+> take soapbar 1 from cabinet 2
+Nothing happens.
+
+Expert Observations: cabinet 1 has a cloth 2. cabinet 2 has a cloth 3, and a soapbar 1. cabinet 3 has a cloth 1, and a toiletpaper 2. cabinet 4 has a candle 2, a soapbottle 3, and a spraybottle 1.
+Expert Actions: I go to cabinet 1, open cabinet 1, go to cabinet 2, open cabinet 2, go to cabinet 3, open cabinet 3, go to cabinet 4, take soapbar 1 from cabinet 2.
+
+*** Reflection Result***
+REFLECTION: I met Operation Failure. I try to take soapbar 1 from cabinet 2, but Nothing happens. I should not take soap bar 1 from cabinet 2 when I have already gone to cabinet 4. Instead, I should go to cabinet 2, then take soapbar 1 from cabinet 2.
+
+
+Exemplar#3:
+
+*** Input ***
+
+You are in the middle of a room. Looking quickly around you, you see a armchair 1, a cabinet 4, a cabinet 3, a cabinet 2, a cabinet 1, a drawer 5, a drawer 4, a drawer 3, a drawer 2, a drawer 1, a dresser 1, a garbagecan 1, a safe 1, a shelf 12, a shelf 11, a shelf 10, a shelf 9, a shelf 8, a shelf 7, a shelf 6, a shelf 5, a shelf 4, a shelf 3, a shelf 2, a shelf 1, a sidetable 1, and a sofa 1.
+Your task is to: put some vase on safe.
+> think: To solve the task, I need to find and take a vase, then put it in/on the safe.
+OK.
+> think: First I need to find a vase. A vase is more likely to appear on shelves (1-12), cabinets (1-4), drawers (1-5), dresser (1), sidetable (1). I can check one by one, starting with shelves.
+OK.
+> go to shelf 1
+On the shelf 1, you see nothing.
+> go to shelf 2
+On the shelf 2, you see nothing.
+> go to shelf 3
+Nothing happens.
+> go to shelf 4
+On the shelf 4, you see nothing.
+> go to shelf 5
+On the shelf 5, you see nothing.
+> go to shelf 6
+On the shelf 6, you see nothing.
+> go to shelf 7
+On the shelf 7, you see a statue 3.
+> go to shelf 8
+On the shelf 8, you see a keychain 2.
+> go to shelf 9
+On the shelf 9, you see nothing.
+> go to shelf 10
+On the shelf 10, you see a creditcard 3.
+> go to shelf 11
+On the shelf 11, you see nothing.
+> go to shelf 12
+On the shelf 12, you see nothing.
+> go to cabinet 1
+The cabinet 1 is closed.
+> open cabinet 1
+You open the cabinet 1. The cabinet 1 is open. In it, you see nothing.
+> go to cabinet 2
+Nothing happens.
+> go to cabinet 3
+The cabinet 3 is closed.
+> open cabinet 3
+You open the cabinet 3. The cabinet 3 is open. In it, you see a box 1, and a tissuebox 1.
+> go to cabinet 4
+Nothing happens.
+
+Expert Observations: shelf 7 has a statue 3. shelf 8 has a keychain 2. shelf 10 has a creditcard 3. cabinet 3 has a a box 1, and a tissuebox 1.
+Expert Actions: I go to shelf (1-12), go to cabinet 1, open cabinet 1, go to cabinet (2-3), open cabinet 3, open cabinet 3.
+
+*** Reflection Result***
+REFLECTION:  I met Search Failure. In this trial, I checked shelf (1-12) and cabinet (1-3), but not found vase, In next trial, I continue to find vase, starting with drawer 1.

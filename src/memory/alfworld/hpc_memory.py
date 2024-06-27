@@ -39,7 +39,7 @@ class LocalMemory:
         for i in range(num_envs):
              self.history += [{
                 'name': f'env_{i}',
-                'memory': [],
+                'reflection': [],
                 'is_success': False,
                 'skip': False
             }]
@@ -55,16 +55,16 @@ class LocalMemory:
         
     def add(self, idx, input_dict):
         for key in input_dict:
-            if key == 'memory':
+            if key == 'reflection':
                 self.history[idx][key] += [input_dict[key]]
             else:
                 self.history[idx][key] = input_dict[key]
     
     def recall(self, idx: int):
-        return self.history[idx]['memory']
+        return self.history[idx]['reflection']
 
 class GlobalMemory:
-    def __init__(self, logging_dir, is_vector, env_batch_size = 3, task_batch_size = 5):
+    def __init__(self, logging_dir, is_vector, env_batch_size = 1, task_batch_size = 1):
         self.env_memory = dict()
         self.task_memory = dict()
         self.env_bs = env_batch_size
@@ -96,7 +96,7 @@ class GlobalMemory:
         # 属于好奇心或重复，取出增量记忆进行反思  
         if env_curiocity or len(self.env_memory[env_description]['increment_traj']) > self.env_bs:
             samples = self._get_samples(self.env_memory[env_description]['increment_traj'])
-            increment_known_obs = [sample['known_obs'] for sample in samples]
+            increment_known_obs = [sample['function'] for sample in samples]
             increment_env = dict(known_obs=self.env_memory[env_description]['known_obs'],
                                     increment_known_obs=increment_known_obs)
             self.env_memory[env_description]['increment_traj'] = []
@@ -123,9 +123,9 @@ class GlobalMemory:
             samples = self._get_samples(self.task_memory[task_type][status]['increment_traj'])
             increment_action_guidance = [(dict(
                                                 task=sample['task'],
-                                                my_actions=sample["my_actions"],
+                                                my_actions=sample["action"],
                                                 is_success=sample["is_success"],
-                                                reflection=sample["memory"][-1] if len(sample["memory"]) > 0 else '', 
+                                                reflection=sample["reflection"][-1] if len(sample["reflection"]) > 0 else '', 
                                                 )
                                         ) for sample in samples]
             increment_task = dict(task_type=task_type,
@@ -136,7 +136,7 @@ class GlobalMemory:
             if self.is_vector:
                 samples = self._get_samples(self.task_memory[task_type][status]['increment_traj'])
                 ids = [str(traj['trial_idx']) + '_' + str(traj['env_idx']) for traj in self.task_memory[task_type][status]['increment_traj']]
-                sample_reflections = [sample["memory"][-1] for sample in samples]
+                sample_reflections = [sample["reflection"][-1] for sample in samples]
                 sample_reflection_embeddings = [self.db.get_embedding(reflection) for reflection in sample_reflections]
                 self.task_db[task_type][status].add(embeddings=sample_reflection_embeddings,ids=ids)
             self.task_memory[task_type][status]['increment_traj'] = []

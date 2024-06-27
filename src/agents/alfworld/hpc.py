@@ -100,15 +100,19 @@ class HPCAgent:
     
     def update_local_memory(self, history_log, is_success, env_idx):
         if not self.local_memory.is_skip(env_idx):
-            reflection_prompt = self.build_reflection_prompt(history_log, is_success, env_idx)
+            expert_prompt = self.build_expert_prompt(history_log)
+            expert_result = self.llm(expert_prompt, max_tokens=512) 
+            reflection_prompt = self.build_reflection_prompt(history_log, is_success, expert_result, env_idx)
             reflection_result = self.llm(reflection_prompt, max_tokens=512) 
-            expert_trajectory = self.process_after_reflection(reflection_result, history_log, is_success)
+            expert_trajectory = self.process_after_reflection(expert_result, reflection_result, history_log, is_success)
             self.local_memory.add(env_idx, expert_trajectory)
         return expert_trajectory
             
     def update_global_memory(self, expert_trajectory, env_idx, trial_idx):
         env_summary = task_summary = ''
         env_query, task_query = self.build_summary_prompt(expert_trajectory, env_idx, trial_idx)
+        # if env_query:
+        #     import pdb;pdb.set_trace()
         if env_query:
             env_summary = self.llm(env_query, max_tokens=512) 
             self.global_memory.add(env_summary, expert_trajectory, mode='env')
@@ -126,13 +130,18 @@ class HPCAgent:
         fewshots = self.fewshot_builder.get_inference_fewshots(self.env.name, env_description , task_description, self.global_memory, self.logging_dir)
         query = self.prompt_builder.get_inference_prompts(init_ob, fewshots, local_memories, short_memories, known_obs_history, action_guidance_history)
         return query
+    
+    def build_expert_prompt(self, history_log):
+        fewshots = self.fewshot_builder.get_expert_fewshots()
+        query = self.prompt_builder.get_expert_prompts(history_log, fewshots)
+        return query
         
-    def build_reflection_prompt(self, history_log, is_success, env_idx):
+    def build_reflection_prompt(self, history_log, is_success, expert_result, env_idx):
         local_memories = self.local_memory.recall(env_idx)
         if len(local_memories) > 3:
             local_memories = local_memories[-3:]
         fewshots = self.fewshot_builder.get_reflection_fewshots(is_success)
-        query = self.prompt_builder.get_reflection_prompts(history_log, is_success, fewshots, local_memories)
+        query = self.prompt_builder.get_reflection_prompts(history_log, is_success, fewshots, local_memories, expert_result)
         return query
     
     def build_summary_prompt(self, expert_trajectory, env_idx, trial_idx):
@@ -148,16 +157,17 @@ class HPCAgent:
             task_query = self.prompt_builder.task_summary_prompts(increment_task, task_fewshots, is_success)
         return env_query, task_query
     
-    def process_after_reflection(self, reflection_result, history_log, is_success):
+    def process_after_reflection(self, expert_result, reflection_result, history_log, is_success):
         scenario = history_log.split("Here is the task:")[-1].strip()
         env_pattern = r'You are in the middle of a room\..*?(?=\n)'
         task_pattern = r'Your task is to: (.*?)(?=\n)'
-        known_obs_pattern = r'KNOWN OBS: (.*?)(?:\n|$)'
-        my_actions_pattern = r'MY ACTIONS: (.*?)(?:\n|$)'
-        reflection_pattern = r'REFLECTION: (.*?)(?:\n|$)'
+        location_pattern = r'\(1\)locations:(.*?)\(2\)functions:'
+        function_pattern = r'\(2\)functions:(.*?)Expert Actions:'
+        action_pattern = r'Expert Actions:(.*)'
+        reflection_pattern = r'Reflection: (.*?)(?:\n|$)'
 
         env_description = task_description  = ''
-        known_obs = my_actions = reflection = ''
+        location = function = action = reflection = ''
         
         env_match = re.search(env_pattern, scenario, re.DOTALL)
         if env_match:
@@ -167,23 +177,28 @@ class HPCAgent:
         if task_match:
             task_description = task_match.group(1).strip()
 
-        known_obs_match = re.search(known_obs_pattern, reflection_result, re.DOTALL)
-        if known_obs_match:
-            known_obs = known_obs_match.group(1).strip()
+        location_match = re.search(location_pattern, expert_result, re.DOTALL)
+        if location_match:
+            location = location_match.group(1).strip()
 
-        my_actions_match = re.search(my_actions_pattern, reflection_result, re.DOTALL)
-        if my_actions_match:
-            my_actions = my_actions_match.group(1).strip()
+        function_match = re.search(function_pattern, expert_result, re.DOTALL)
+        if function_match:
+            function = function_match.group(1).strip()
+
+        action_match = re.search(action_pattern, expert_result, re.DOTALL)
+        if action_match:
+            action = action_match.group(1).strip()
 
         reflection_match = re.search(reflection_pattern, reflection_result, re.DOTALL)
         if reflection_match:
             reflection = reflection_match.group(1).strip()
-            
+
         expert_trajectory = dict(env=env_description,
                              task=task_description,
-                             known_obs=known_obs,
-                             my_actions=my_actions,
-                             memory=reflection,
+                             location=location,
+                             function=function,
+                             action=action,
+                             reflection=reflection,
                              is_success=is_success
                              )
         return expert_trajectory
