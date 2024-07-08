@@ -111,6 +111,8 @@ ACCURACY: {round(num_successes / self.num_envs, 2)}
             if to_print:
                 print(f'> {action}\n{observation}')
                 sys.stdout.flush()
+            if action.startswith('think:'):
+                continue
             if done:
                 history_log = self.build_infer_prompt(env_idx, init_ob)
                 return history_log, True

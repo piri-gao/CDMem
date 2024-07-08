@@ -4,7 +4,7 @@ cd ..
 python src/main.py \
         --num_trials 5 \
         --num_envs 67 \
-        --run_name "reflexion_logs_t5e67_fix_action" \
+        --run_name "reflexion_logs_t5e67" \
         --model "gpt-3.5-turbo"  \
         --agent "reflect"   \
         --env "alfworld"

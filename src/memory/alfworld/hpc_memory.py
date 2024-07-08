@@ -96,9 +96,10 @@ class GlobalMemory:
         # 属于好奇心或重复，取出增量记忆进行反思  
         if env_curiocity or len(self.env_memory[env_description]['increment_traj']) > self.env_bs:
             samples = self._get_samples(self.env_memory[env_description]['increment_traj'])
-            increment_known_obs = [sample['function'] for sample in samples]
-            increment_env = dict(known_obs=self.env_memory[env_description]['known_obs'],
-                                    increment_known_obs=increment_known_obs)
+            increment_known_obs = [sample['function'] for sample in samples if sample['function'] != 'None']
+            if len(increment_known_obs) > 0:
+                increment_env = dict(known_obs=self.env_memory[env_description]['known_obs'],
+                                        increment_known_obs=increment_known_obs)
             self.env_memory[env_description]['increment_traj'] = []
         # 更新task_memory
         # 判断是否属于好奇心

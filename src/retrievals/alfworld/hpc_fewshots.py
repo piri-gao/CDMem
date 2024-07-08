@@ -46,8 +46,8 @@ class HPCFewshotBuilder:
                     num_examples = 0
                 else:
                     example_ids.extend(intersection)
-                    task_all_traj = [traj for traj in task_all_traj if traj not in intersection]
                     num_examples -= len(intersection)
+                    task_all_traj = [traj for traj in task_all_traj if traj not in intersection]
             if num_examples > 0:
                 if len(task_all_traj) >= num_examples:
                     choose_traj = random.sample(task_all_traj, num_examples)
@@ -56,8 +56,8 @@ class HPCFewshotBuilder:
                     num_examples = 0
                 else:
                     example_ids.extend(task_all_traj)
-                    task_all_traj = []
                     num_examples -= len(task_all_traj)
+                    task_all_traj = []
         examples = []
         if len(example_ids) > 0:
             for example_idx in example_ids:
@@ -66,6 +66,8 @@ class HPCFewshotBuilder:
             default_examples = self._default_inference_fewshots(name)
             default_examples = random.sample(default_examples, num_examples)
             examples.extend(default_examples)
+        if len(examples) != 2:
+            import pdb;pdb.set_trace()
         return '\n\n'.join(examples)
                          
     def _ids2example(self, logging_dir, example_idx):

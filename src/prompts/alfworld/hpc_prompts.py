@@ -106,6 +106,8 @@ Expert Observations:{expert_observations}
 *** Reflection Result***
 Your reflection here, please start with: Reflection:
 """
+        if is_success:
+            import pdb;pdb.set_trace()
         return query
     
     def env_summary_prompts(self, known_obs_history, env_fewshots):

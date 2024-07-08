@@ -70,7 +70,7 @@ class HPCAgent:
                 self.update_global_memory(expert_trajectory, env_idx, trial_idx)
                 self.logger.log_global_memory(trial_idx)
             self.env.close()
-            self.logger.log_trial_end(trial_idx, num_successes, num_additional_successes)
+            # self.logger.log_trial_end(trial_idx, num_successes, num_additional_successes)
             self.logger.log_world_end(trial_idx, num_successes, num_additional_successes)
             self.env.reload()
     
@@ -88,6 +88,8 @@ class HPCAgent:
             if to_print:
                 print(f'> {action}\n{observation}')
                 sys.stdout.flush()
+            if action.startswith('think:'):
+                continue
             if done:
                 history_log = self.build_infer_prompt(env_idx, init_ob)
                 return history_log, True
@@ -111,8 +113,6 @@ class HPCAgent:
     def update_global_memory(self, expert_trajectory, env_idx, trial_idx):
         env_summary = task_summary = ''
         env_query, task_query = self.build_summary_prompt(expert_trajectory, env_idx, trial_idx)
-        # if env_query:
-        #     import pdb;pdb.set_trace()
         if env_query:
             env_summary = self.llm(env_query, max_tokens=512) 
             self.global_memory.add(env_summary, expert_trajectory, mode='env')
