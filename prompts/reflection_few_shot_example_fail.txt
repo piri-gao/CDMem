@@ -65,7 +65,7 @@ Expert Observations: cabinet 1 has a cloth 2. cabinet 2 has a cloth 3, and a soa
 Expert Actions: I go to cabinet 1, open cabinet 1, go to cabinet 2, open cabinet 2, go to cabinet 3, open cabinet 3, go to cabinet 4, take soapbar 1 from cabinet 2.
 
 *** Reflection Result***
-REFLECTION: I met Operation Failure. I try to take soapbar 1 from cabinet 2, but Nothing happens. I should not take soap bar 1 from cabinet 2 when I have already gone to cabinet 4. Instead, I should go to cabinet 2, then take soapbar 1 from cabinet 2.
+REFLECTION: I met Operation Failure. I try to take soapbar 1 from cabinet 2, but Nothing happens. I should not take soapbar 1 from cabinet 2 when I have already gone to cabinet 4. Instead, I should go to cabinet 2, then take soapbar 1 from cabinet 2.
 
 
 Exemplar#3:
@@ -119,4 +119,4 @@ Expert Observations: shelf 7 has a statue 3. shelf 8 has a keychain 2. shelf 10 
 Expert Actions: I go to shelf (1-12), go to cabinet 1, open cabinet 1, go to cabinet (2-3), open cabinet 3, open cabinet 3.
 
 *** Reflection Result***
-REFLECTION:  I met Search Failure. In this trial, I checked shelf (1-12) and cabinet (1-3), but not found vase, In next trial, I continue to find vase, starting with drawer 1.
+REFLECTION:  I met Search Failure. In this trial, I checked shelf (1-12) and cabinet (1-3), but not found vase, In next trial, I continue to find vase, starting in locations I haven't checked yet, like drawer 1.

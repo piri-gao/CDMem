@@ -56,16 +56,13 @@ class GPTWrapper:
                 "content": prompt
             }
         ]
-        try:
-            response = self.client.chat.completions.create(
-                model=model,
-                messages=messages,
-                max_tokens=max_tokens,
-                stop=stop_strs,
-                temperature=temperature,
-            )
-        except:
-            import pdb;pdb.set_trace()
+        response = self.client.chat.completions.create(
+            model=model,
+            messages=messages,
+            max_tokens=max_tokens,
+            stop=stop_strs,
+            temperature=temperature,
+        )
         return response.choices[0].message.content
 
     @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))

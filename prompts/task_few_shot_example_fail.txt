@@ -4,15 +4,15 @@ Exemplars #1
 
 Experience #0: 
 Task: find two toiletpaper and put them in cabinet.
-Reflection: I met Operation Failure. I tried to take toiletpaper from cabinets 1-3, but nothing happened. This is because there is no toiletpaper in these cabinets. I should not take items from containers that do not have the target item. In the next trial, I should continue searching for the toiletpaper in other possible locations, such as drawers or shelves.
+Reflection: I met Operation Failure. I tried to take toiletpaper from cabinet (1-3), but nothing happened. This is because there is no toiletpaper in these cabinets. I should not take items from containers that do not have the target item. In the next trial, I should continue searching for the toiletpaper in other possible locations.
 Experience #1: 
 Task: find two soapbar and put them in safe.
-Reflection: I met Search Failure. In this trial, I checked all drawers and shelves but did not find the soapbar. In the next trial, I should continue searching for the soapbars, starting with a different location like the cabinet or dresser.
+Reflection: I met Search Failure. In this trial, I checked drawer (1-6) and desk (1-2) but did not find the soapbar. In the next trial, I should continue to find soapbar, starting with a different location, like shelf 1.
 
 ***Summary Result***
 
-1. If I plan to take an item from a container, I should verify that this container indeed contains this item. If it does not, I should continue searching in other locations.
-2. If I can not find an item, I should review locations already searched to avoid repeated searches,  then plan the next search location.
+1. Before I take an item from a container, I should verify that this container indeed contains this item. 
+2. If I can not find an item, I should continue searching in locations I haven't checked yet to avoid duplicate searching.
 
 Exemplars #2
 
@@ -20,15 +20,15 @@ Exemplars #2
 
 Experience #0: 
 Task: put some vase on safe.
-Reflection: I met Search Failure. I spent too much time checking empty cabinets and drawers without finding a vase. I should have focused on locations where a vase is more likely to be found, such as shelves or sidetables. Additionally, I should have moved on to the next location if the current one was empty, instead of repeatedly checking the same locations. I will prioritize checking locations with higher chances of containing the item I need in the future
+Reflection: I met Search Failure. In this trial, I checked shelf (1-12) and cabinet (1-3), but not found vase, In next trial, I continue to find vase, starting in locations I haven't checked yet, like coutertop 1.
 Experience #1: 
 Task: put a soapbar on cabinet.
-Reflection: I met Plan Failure. In this trial, I make a mistake of taking soapbottle instead of soapbar. I should double-check the items I pick up to ensure they match the required items for the task.
+Reflection: I met Plan Failure. In this trial, I make a mistake of taking soapbottle instead of soapbar. I should inspect the item to accurately identify the target item and avoid mistaking it for similar items.
 Past Summary:
-1. If I plan to take an item from a container, I should verify that this container indeed contains this item. If it does not, I should continue searching in other locations.
+1. Before I take an item from a container, I should verify that this container indeed contains this item. 
 
 ***Summary Result***
 
-1. If I plan to take an item from a container, I should verify that this container indeed contains this item. If it does not, I should continue searching in other locations.
-2. If I can not find an item, I should review locations already searched to avoid repeated searches, then focused on locations where the item more likely to be found.
-3. If I plan to take an item from a container, I should double-check the items I pick up to ensure they match the required items for the task.
+1. Before I take an item from a container, I should verify that this container indeed contains this item. 
+2. If I can not find an item, I should continue searching in locations I haven't checked yet to avoid duplicate searching.
+3. Before I take an item from a container, I should inspect the item to accurately identify the target item and avoid mistaking it for similar items.
