@@ -231,15 +231,10 @@ class Logger:
         self.local_memory_paths = [os.path.join(self.logging_dir, f'local_memory_trial_{trial_idx}.json') for trial_idx in range(self.num_trials)]
         self.global_env_paths = [os.path.join(self.logging_dir, f'global_env_trial_{trial_idx}.json') for trial_idx in range(self.num_trials)]
         self.global_task_paths = [os.path.join(self.logging_dir, f'global_task_trial_{trial_idx}.json') for trial_idx in range(self.num_trials)]
-        if start_trial_num == 0:
-            for path in list(itertools.chain(self.trial_log_paths, self.local_memory_paths, self.global_env_paths, self.global_task_paths)):
-                if os.path.exists(path):
-                    open(path, 'w').close()
-        else:
-            for path in list(itertools.chain(self.trial_log_paths[start_trial_num:], self.local_memory_paths[start_trial_num:], 
-                                             self.global_env_paths[start_trial_num:], self.global_task_paths[start_trial_num:])):
-                if os.path.exists(path):
-                    open(path, 'w').close()
+        for path in list(itertools.chain(self.trial_log_paths[start_trial_num:], self.local_memory_paths[start_trial_num:], 
+                                            self.global_env_paths[start_trial_num:], self.global_task_paths[start_trial_num:])):
+            if os.path.exists(path):
+                open(path, 'w').close()
                 
     def log_world_start(self, trial_idx):
         with open(self.world_log_path, 'a') as wf:

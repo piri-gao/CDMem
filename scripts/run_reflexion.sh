@@ -7,4 +7,7 @@ python src/main.py \
         --run_name "reflexion_logs_t5e67" \
         --model "gpt-3.5-turbo"  \
         --agent "reflect"   \
-        --env "alfworld"
+        --env "alfworld" \
+        --is_resume \
+        --resume_dir logs/reflexion_logs_t5e67_0628_120045_test \
+        --start_trial_num 3

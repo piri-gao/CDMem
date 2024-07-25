@@ -195,7 +195,7 @@ class GlobalMemory:
                             repeat_scores.append(repeat_score)
                     for i in range(len(split_summary)):
                         if self.is_vector:
-                            task_recall += f"{item_idx}. {split_summary[i]} {round(repeat_scores[i],2)}\n"
+                            task_recall += f"{item_idx}. {split_summary[i]} {{{round(repeat_scores[i], 2)}}}\n"
                         else:
                             task_recall += f"{item_idx}. {split_summary[i]}\n"
                         item_idx += 1
@@ -211,7 +211,7 @@ class GlobalMemory:
                             repeat_scores.append(repeat_score)
                     for i in range(len(split_summary)):
                         if self.is_vector:
-                            task_recall += f"{item_idx}. {split_summary[i]} {round(repeat_scores[i],2)}\n"
+                            task_recall += f"{item_idx}. {split_summary[i]} {{{round(repeat_scores[i],2)}}}\n"
                         else:
                             task_recall += f"{item_idx}. {split_summary[i]}\n"
                         item_idx += 1

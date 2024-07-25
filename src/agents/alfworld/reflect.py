@@ -16,6 +16,7 @@ class ReflectAgent:
                  env, 
                  llm_wrapper, 
                  model, 
+                 start_trial_num,
                  short_memory, 
                  local_memory, 
                  prompt_builder, 
@@ -26,6 +27,7 @@ class ReflectAgent:
         self.num_envs = num_envs
         self.max_steps = max_steps
         self.logging_dir = logging_dir
+        self.start_trial_num = start_trial_num
         self.env = env()
         self.model = model
         self.llm = llm_wrapper(model)
@@ -33,10 +35,13 @@ class ReflectAgent:
         self.local_memory = local_memory(num_envs)
         self.prompt_builder = prompt_builder()
         self.fewshot_builder = fewshot_builder()
+        if self.start_trial_num > 0:
+            trial_env_configs_log_path: str = os.path.join(self.logging_dir, f'env_results_trial_{self.start_trial_num-1}.json')
+            self.local_memory.resume(trial_env_configs_log_path)
     
     def run(self):
         world_log_path = os.path.join(self.logging_dir, 'world.log')
-        for trial_idx in range(self.num_trials):
+        for trial_idx in range(self.start_trial_num, self.num_trials):
             with open(world_log_path, 'a') as wf:
                 wf.write(f'\n\n***** Start Trial #{trial_idx} *****\n\n')
             trial_log_path: str = os.path.join(self.logging_dir, f'trial_{trial_idx}.log')

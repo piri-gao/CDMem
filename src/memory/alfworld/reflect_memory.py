@@ -1,4 +1,5 @@
 from typing import List, Dict, Any
+import json
 
 
 class ShortMemory:
@@ -53,3 +54,9 @@ class LocalMemory:
     
     def recall(self, idx: int):
         return self.history[idx]['memory']
+    
+    def resume(self, resume_path):
+        with open(resume_path, 'r') as f:
+            sample_list = json.load(f)
+        self.history = sample_list
+        
