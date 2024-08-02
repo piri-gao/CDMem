@@ -6,7 +6,7 @@ import re
 import numpy as np
 
 from typing import Any, Dict, List, Tuple
-from base import BaseEnv
+from .base import BaseEnv
 
 # Type in the URL of the webshop server:
 # If local:

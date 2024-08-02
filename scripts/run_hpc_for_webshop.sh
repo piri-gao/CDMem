@@ -1,4 +1,4 @@
-source ./set_api.sh
+source ./set_openai.sh
 
 cd ..
 python src/main.py \

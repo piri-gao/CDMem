@@ -139,7 +139,7 @@ ACCURACY: {round(num_successes / self.num_envs, 2)}
         local_memories = self.local_memory.recall(env_idx)
         if len(local_memories) > 3:
             local_memories = local_memories[-3:]
-        fewshots = self.fewshot_builder.get_inference_fewshots(self.env.name)
+        fewshots = self.fewshot_builder.get_inference_fewshots(self.env.env_name)
         query = self.prompt_builder.get_inference_prompts(init_ob, fewshots, local_memories, short_memories)
         return query
         

@@ -7,7 +7,7 @@ import itertools
 from typing import List, Callable
 
 
-class HPCAgent:
+class HPCAgentWS:
     """
     HPC Agent class.
     """
@@ -53,7 +53,7 @@ class HPCAgent:
                     'session_idx': row["session_idx"],
                 },
                 'env_name': 'webshop'
-            } for row in json.load(open('webshop.fixed100.json', "r"))
+            } for row in json.load(open('/home/kaer/HippocampusAgent/src/agents/webshop/webshop.fixed100.json', "r"))
         ]
 
     def run(self):
@@ -62,9 +62,10 @@ class HPCAgent:
             num_successes: int = 0
             num_additional_successes: int = 0
             for env_idx in range(self.num_envs):  # consider 100 envs
-                self.env.__init__()
-                init_ob, info = self.env.reset
-                print(f"{env_idx} using {self.env.name}")
+                self.task = self.tasks[env_idx]['task']
+                self.env.__init__(self.tasks[env_idx]['env_kwargs']['session_idx'])
+                init_ob, info = self.env.reset()
+                print(f"{env_idx} using {self.env.env_name}")
                 if self.local_memory.is_success(env_idx):
                     num_successes += 1
                     self.logger.log_world_success(trial_idx, env_idx)
@@ -141,7 +142,7 @@ class HPCAgent:
             local_memories = local_memories[-3:]
         env_description, task_description = self.process_before_infer(init_ob)
         known_obs_history, action_guidance_history = self.global_memory.recall(env_description, task_description)
-        fewshots = self.fewshot_builder.get_inference_fewshots(self.env.name, env_description, task_description,
+        fewshots = self.fewshot_builder.get_inference_fewshots(self.env.env_name, env_description, task_description,
                                                                self.global_memory, self.logging_dir)
         query = self.prompt_builder.get_inference_prompts(init_ob, fewshots, local_memories, short_memories,
                                                           known_obs_history, action_guidance_history)
@@ -221,7 +222,8 @@ class HPCAgent:
         return expert_trajectory
 
     def process_before_infer(self, init_ob):
-        env_description = task_description = ''
+        env_description = task_description = init_ob
+        return env_description, task_description
         env_pattern = r'You are in the middle of a room\..*?(?=\n)'
         task_pattern = r'Your task is to:\s*(.*)'
 
