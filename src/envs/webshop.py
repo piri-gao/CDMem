@@ -6,7 +6,7 @@ import re
 import numpy as np
 
 from typing import Any, Dict, List, Tuple
-from envs.base import BaseEnv
+from base import BaseEnv
 
 # Type in the URL of the webshop server:
 # If local:
@@ -113,7 +113,7 @@ def webshop_text(session, page_type, query_string='', page_num=1, asin='', optio
 
 
 class WebshopEnv(BaseEnv):
-    def __init__(self, session_idx: str, max_steps: int = 15):
+    def __init__(self, session_idx: str = '', max_steps: int = 15):
         self.session_idx = session_idx
         self.max_steps = max_steps
         self.env_name = 'webshop'
@@ -130,6 +130,10 @@ class WebshopEnv(BaseEnv):
         self.session = {'session': self.session_idx, 'page_type': 'init'}
         observation, info = webshop_text(**self.session)
         self.session.update(info)
+        return observation, info
+
+    def reload(self):
+        self.__init__()
 
     def success_fn(self) -> bool:
         return self.reward

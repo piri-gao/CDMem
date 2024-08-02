@@ -1,7 +1,7 @@
 import yaml
 import importlib
-import alfworld
-import alfworld.agents.environment
+# import alfworld
+# import alfworld.agents.environment
 
 class AlfworldEnv:
     def __init__(self):
