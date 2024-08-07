@@ -1,0 +1,34 @@
+You are in the middle of a room. Looking quickly around you, you see a cabinet 4, a cabinet 3, a cabinet 2, a cabinet1, a coffeemachine 1, a countertop 1, a diningtable 3, adiningtable 2, a diningtable 1, a drawer 1, a fridge 1, agarbagecan 1, a microwave 1, a sidetable 1, a sinkbasin 1,and a toaster 1.Your task is to: find some apple and put it in sidetable.
+> think: To solve the task, I need to find and take an apple,then put it in sidetable.
+OK.
+> think: First I need to find an apple. An apple is more likely to appear in fridges (1), diningtables (1-3), sidetables (1),countertops (1), sinkbasins (1), garbagecan (1). I can checkone by one, starting with fridge 1.
+OK.
+> go to fridge 1
+The fridge 1 is closed.
+SUMMARIZATION: Looking for an object here, but it isclosed.
+> open fridge 1 You open the fridge 1. 
+The fridge 1 is open. In it, you see a lettuce 2, a mug 2, a potato 2, and a tomato 1.
+SUMMARIZATION: Looking for an object, but it's not here.
+> go to table 1
+Nothing happens.
+SUMMARIZATION: Tried to go to a location but failed.
+> go to diningtable 1
+On the diningtable 1, you see nothing.
+SUMMARIZATION: Looking for an object, but it's not here.
+> go to garbagecan 1
+On the garbagecan 1, you see a apple 3, and a egg 3.
+SUMMARIZATION: Looking for an object and found thedesired object here.
+> think: Now I find an apple (3). Next, I need to take it.
+OK.
+> take apple 3 from garbagecan 1
+You pick up the apple 3 from the garbagecan 1.
+SUMMARIZATION: Successfully took an object.
+> think: Now I find an apple (3). Next, I need to put it in/onsidetable 1.
+OK.
+> go to sidetable 1On the sidetable 1, you see nothing.
+SUMMARIZATION: Looking for a location to put an objectin/on.
+> put apple 3 in/on sidetable
+Nothing happens.
+SUMMARIZATION: Tried to put an object in/on a locationbut failed.
+> put apple 3 in/on sidetable 1You put the apple 3 in/on the sidetable 1.
+SUMMARIZATION: Successfully put an object in/on alocation.

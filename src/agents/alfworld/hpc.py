@@ -88,14 +88,14 @@ class HPCAgent:
             if to_print:
                 print(f'> {action}\n{observation}')
                 sys.stdout.flush()
-            if action.startswith('think:'):
-                continue
             if done:
                 history_log = self.build_infer_prompt(env_idx, init_ob)
                 return history_log, True
             elif exhausted:
                 history_log = self.build_infer_prompt(env_idx, init_ob)
                 return history_log, False
+            if action.startswith('think:'):
+                continue
             cur_step += 1
         history_log = self.build_infer_prompt(env_idx, init_ob)
         return history_log, False
@@ -261,11 +261,6 @@ class Logger:
     def log_trial_content(self, content, is_success, trial_idx, env_idx):
         with open(self.trial_log_paths[trial_idx], 'a') as wf:
             wf.write(f'\n#####\n\nEnvironment #{env_idx}:\n{content}\n\nSTATUS: {"OK" if is_success else "FAIL"}\n\n#####\n')
-    
-    def log_trial_end(self, trial_idx, num_successes, num_additional_successes):
-        log_str = self._get_stats_str(num_successes, num_additional_successes)
-        with open(self.trial_log_paths[trial_idx], 'a') as wf:
-            wf.write(log_str)
     
     def log_local_memory(self, trial_idx):
         with open(self.local_memory_paths[trial_idx], 'w') as wf:

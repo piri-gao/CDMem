@@ -67,6 +67,7 @@ class GlobalMemory:
     def __init__(self, logging_dir, is_vector, env_batch_size = 1, task_batch_size = 1):
         self.env_memory = dict()
         self.task_memory = dict()
+        self.task_memory_to_recall = dict()
         self.env_bs = env_batch_size
         self.task_bs = task_batch_size
         self.logging_dir = logging_dir
@@ -96,7 +97,7 @@ class GlobalMemory:
         # 属于好奇心或重复，取出增量记忆进行反思  
         if env_curiocity or len(self.env_memory[env_description]['increment_traj']) > self.env_bs:
             samples = self._get_samples(self.env_memory[env_description]['increment_traj'])
-            increment_known_obs = [sample['function'] for sample in samples if sample['function'] != 'None']
+            increment_known_obs = [sample['function'] for sample in samples if len(sample['function']) > 0 and sample['function'] != 'None']
             if len(increment_known_obs) > 0:
                 increment_env = dict(known_obs=self.env_memory[env_description]['known_obs'],
                                         increment_known_obs=increment_known_obs)
@@ -105,6 +106,7 @@ class GlobalMemory:
         # 判断是否属于好奇心
         if task_type not in self.task_memory:
             self.task_memory[task_type] = {}
+            self.task_memory_to_recall[task_type] = {}
             if self.is_vector:
                 self.task_db[task_type] = {}
         if status not in self.task_memory[task_type]:
@@ -171,47 +173,46 @@ class GlobalMemory:
             self.env_memory[env_description]['known_obs'] = summary
         elif mode == 'task':
             self.task_memory[task_type][status]['action_guidance'] = summary
+            split_summary = self._split_summary(summary)
+            if self.is_vector:
+                repeat_scores = []
+                collection = self.task_db[task_type][status]
+                for summary_item in split_summary:
+                    summary_item_embedding = self.db.get_embedding(summary_item)
+                    results = collection.query(query_embeddings=summary_item_embedding, n_results=collection.count())
+                    repeat_score = 1 / sum(results['distances'][0])
+                    repeat_scores.append(repeat_score)
+                sorted_summary_score = sorted(zip(split_summary, repeat_scores), key=lambda pair: pair[1], reverse=True)
+                self.task_memory_to_recall[task_type][status] = sorted_summary_score
+            else:
+                self.task_memory_to_recall[task_type][status] = split_summary
         else:
             raise ValueError(f"Unseen mode: {mode}")
         
-    def recall(self, env_description, task_description):
+    def recall(self, env_description, task_description, max_len=6):
         env_recall = task_recall = ''
         if env_description:
             if env_description in self.env_memory:
                 env_recall = self.env_memory[env_description]['known_obs']
         if task_description:
             task_type = self._convert_task_description(task_description)
-            if task_type in self.task_memory:
-                item_idx = 1
-                if 'success' in self.task_memory[task_type]:        
-                    split_summary = self._split_summary(self.task_memory[task_type]['success']['action_guidance'])
-                    if self.is_vector:
-                        repeat_scores = []
-                        collection = self.task_db[task_type]['success']
-                        for summary_item in split_summary:
-                            summary_item_embedding = self.db.get_embedding(summary_item)
-                            results = collection.query(query_embeddings=summary_item_embedding, n_results=collection.count())
-                            repeat_score = 1 / sum(results['distances'][0])
-                            repeat_scores.append(repeat_score)
-                    for i in range(len(split_summary)):
+            if task_type in self.task_memory_to_recall:
+                item_idx = 0
+                if 'success' in self.task_memory_to_recall[task_type]:        
+                    split_summary = self.task_memory_to_recall[task_type]['success']
+                    success_summary_num = min(len(split_summary), max_len//2)
+                    for i in range(success_summary_num):
                         if self.is_vector:
-                            task_recall += f"{item_idx}. {split_summary[i]} {{{round(repeat_scores[i], 2)}}}\n"
+                            task_recall += f"{item_idx}. {split_summary[i][0]} {{{round(split_summary[i][1], 2)}}}\n"
                         else:
                             task_recall += f"{item_idx}. {split_summary[i]}\n"
                         item_idx += 1
                 if 'fail' in self.task_memory[task_type]:
-                    split_summary = self._split_summary(self.task_memory[task_type]['fail']['action_guidance'])
-                    if self.is_vector:
-                        repeat_scores = []
-                        collection = self.task_db[task_type]['fail']
-                        for summary_item in split_summary:
-                            summary_item_embedding = self.db.get_embedding(summary_item)
-                            results = collection.query(query_embeddings=summary_item_embedding, n_results=collection.count())
-                            repeat_score = 1 / sum(results['distances'][0])
-                            repeat_scores.append(repeat_score)
-                    for i in range(len(split_summary)):
+                    split_summary = self.task_memory_to_recall[task_type]['fail']
+                    fail_summary_num = min(len(split_summary), max_len-item_idx)
+                    for i in range(fail_summary_num):
                         if self.is_vector:
-                            task_recall += f"{item_idx}. {split_summary[i]} {{{round(repeat_scores[i],2)}}}\n"
+                            task_recall += f"{item_idx}. {split_summary[i][0]} {{{round(split_summary[i][1], 2)}}}\n"
                         else:
                             task_recall += f"{item_idx}. {split_summary[i]}\n"
                         item_idx += 1
