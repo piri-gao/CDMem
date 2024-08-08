@@ -79,4 +79,14 @@ class GPTWrapper:
             stop=stop_strs,
         )
         return response.choices[0].text
-            
+
+
+# client = OpenAI(
+#                 base_url='http://13.213.124.174:3000/v1',
+#                 api_key='sk-2XzRokvHnv6b98o668655511F708485eA21f72B977B3C1F9-1',
+#                 )
+#
+# print(client.chat.completions.create(
+#             model='gpt-4o-mini',
+#             messages=[{'role': 'user', 'content': 'hello'}]
+#         ))
