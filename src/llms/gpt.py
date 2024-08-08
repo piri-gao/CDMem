@@ -63,10 +63,10 @@ class GPTWrapper:
             }
         ]
 
-        print('Calling GPT API')
-        print(self.client.api_key)
-        print(self.client.base_url)
-        print(model)
+        # print('Calling GPT API')
+        # print(self.client.api_key)
+        # print(self.client.base_url)
+        # print(model)
         response = self.client.chat.completions.create(
             model=model,
             messages=messages,
@@ -74,7 +74,7 @@ class GPTWrapper:
             # stop=stop_strs,
             temperature=temperature,
         )
-        print('Calling response:', response)
+        # print('Calling response:', response)
         return response.choices[0].message.content
 
     @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
@@ -93,12 +93,12 @@ class GPTWrapper:
         return response.choices[0].text
 
 
-client = OpenAI(
-                base_url='http://13.213.124.174:3000/v1',
-                api_key='sk-2XzRokvHnv6b98o668655511F708485eA21f72B977B3C1F9-1',
-                )
-
-print(client.chat.completions.create(
-            model='gpt-4o-mini',
-            messages=[{'role': 'user', 'content': 'hello'}]
-        ))
+# client = OpenAI(
+#                 base_url='http://13.213.124.174:3000/v1',
+#                 api_key='sk-2XzRokvHnv6b98o668655511F708485eA21f72B977B3C1F9-1',
+#                 )
+#
+# print(client.chat.completions.create(
+#             model='gpt-4o-mini',
+#             messages=[{'role': 'user', 'content': 'hello'}]
+#         ))

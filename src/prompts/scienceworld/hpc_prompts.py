@@ -6,11 +6,7 @@ class HPCPromptBuilder:
     
     def get_inference_prompts(self, init_ob, fewshots, local_memories, short_memories, known_obs_history, action_guidance_history):        
         query = f"""
-Role: As an expert in indoor navigation and manipulation, you can efficiently encode, memorize, and retrieve experiences based on action trajectories of exploration and manipulation. Thus you can rapidly adapt to new environments and efficiently complete tasks. 
-
-Instruction: Given the environment, task, functions of containers(such as drawer, shelf, sinkbasin, fridge), locations of items(such as mug, lettuce, bread, alarm clock), action guidance and reflections from past trials, you need to interact with the environment to solve the task.
-
-Exemplars: There are two exemplars to help you better understand how to interact with the environment and to solve the task.
+Interact with a household to solve a task. Here is an example.
 
 {fewshots}
 
