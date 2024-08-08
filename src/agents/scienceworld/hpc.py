@@ -88,11 +88,17 @@ class HPCAgent:
 
     def run_trajectory(self, env_idx, init_ob, task_description, to_print=True):
         cur_step = 0
-        print(init_ob)
+        # print(init_ob)
         self.short_memory.reset()
         while cur_step < self.max_steps:
             infer_prompt = self.build_infer_prompt(env_idx, init_ob, task_description)
+
+            print('infer prompt:', infer_prompt)
+
             action = self.llm(infer_prompt, stop=["\n"]).strip()
+
+            print('get action:', action)
+
             action = self.env.action_parser(action)
             self.short_memory.add("action", action)
             observation, reward, done, exhausted, info = self.env.step(action)

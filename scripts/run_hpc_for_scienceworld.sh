@@ -5,7 +5,7 @@ python src/main.py \
         --num_trials 5 \
         --num_envs 20 \
         --run_name "scworld_logs_webshop" \
-        --model "gpt-3.5-turbo"  \
+        --model "gpt-4o-mini"  \
         --agent "hpc"   \
         --env "scienceworld" \
         --start_trial_num 0

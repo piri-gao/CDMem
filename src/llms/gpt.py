@@ -20,13 +20,18 @@ CompleteModel = Literal["gpt-3.5-turbo-instruct"]
 
 class GPTWrapper:
     def __init__(self, model: Model):
+        # self.client = OpenAI(
+        #         base_url=os.getenv('OPENAI_API_BASE_URL') if 'OPENAI_API_BASE_URL' in os.environ else None,
+        #         api_key=os.getenv('OPENAI_API_KEY'),
+        #         )
         self.client = OpenAI(
-                base_url=os.getenv('OPENAI_API_BASE_URL') if 'OPENAI_API_BASE_URL' in os.environ else None,
-                api_key=os.getenv('OPENAI_API_KEY'),
-                )
+            base_url="http://13.213.124.174:3000/v1",
+            api_key='sk-2XzRokvHnv6b98o668655511F708485eA21f72B977B3C1F9-1',
+        )
         self.model = model
                     
     def __call__(self, prompt: str, stop: List[str] = None, max_tokens: int = 256, mode: str = 'chat'):
+        print('Calling GPT, Mode:', mode)
         try:
             cur_try = 0
             while cur_try < 6:
@@ -37,6 +42,7 @@ class GPTWrapper:
                 else:
                     raise ValueError(f"Invalid mode: {mode}, mode must be 'chat' or 'complete'.")
                 # dumb way to do this
+                print('gpt text:', text)
                 if len(text.strip()) >= 5:
                     return text
                 cur_try += 1
@@ -47,7 +53,7 @@ class GPTWrapper:
             import sys
             sys.exit(1)
     
-    @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
+    # @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
     def get_chat(self, prompt: str, model: ChatModel, max_tokens: int, temperature: float = 0.0, 
                     stop_strs: Optional[List[str]] = None, is_batched: bool = False) -> str:
         messages = [
@@ -56,13 +62,19 @@ class GPTWrapper:
                 "content": prompt
             }
         ]
+
+        print('Calling GPT API')
+        print(self.client.api_key)
+        print(self.client.base_url)
+        print(model)
         response = self.client.chat.completions.create(
             model=model,
             messages=messages,
-            max_tokens=max_tokens,
-            stop=stop_strs,
+            # max_tokens=max_tokens,
+            # stop=stop_strs,
             temperature=temperature,
         )
+        print('Calling response:', response)
         return response.choices[0].message.content
 
     @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
@@ -81,12 +93,12 @@ class GPTWrapper:
         return response.choices[0].text
 
 
-# client = OpenAI(
-#                 base_url='http://13.213.124.174:3000/v1',
-#                 api_key='sk-2XzRokvHnv6b98o668655511F708485eA21f72B977B3C1F9-1',
-#                 )
-#
-# print(client.chat.completions.create(
-#             model='gpt-4o-mini',
-#             messages=[{'role': 'user', 'content': 'hello'}]
-#         ))
+client = OpenAI(
+                base_url='http://13.213.124.174:3000/v1',
+                api_key='sk-2XzRokvHnv6b98o668655511F708485eA21f72B977B3C1F9-1',
+                )
+
+print(client.chat.completions.create(
+            model='gpt-4o-mini',
+            messages=[{'role': 'user', 'content': 'hello'}]
+        ))
