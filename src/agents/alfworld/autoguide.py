@@ -89,12 +89,12 @@ class AutoguideAgent:
             print_text = f'> {action}\n{observation}'
             if not action.startswith('think:'):
                 status_summary_prompt = self.build_status_summary_prompt(init_ob)
-                status_summary = self.llm(status_summary_prompt).replace("SUMMARIZATION: ", "").strip()
+                status_summary = self.llm(status_summary_prompt)
                 self.short_memory.add("status_summary", status_summary)
                 print_text += f'\n{status_summary}'
                 status_list = self.global_memory.get_status_list()
                 if len(status_list) > 0:
-                    status_index = self._status_matching(status_list, status_summary)
+                    status_index = self._status_matching(status_list, status_summary.replace("SUMMARIZATION: ", "").strip())
                 else:
                     status_index = None
                 if status_index:
@@ -106,7 +106,6 @@ class AutoguideAgent:
                         new_selected_guidelines = guidelines[select_index]
                     except:
                         new_selected_guidelines = []
-                        import pdb;pdb.set_trace()
             if to_print:
                 print(print_text)
                 sys.stdout.flush()
@@ -148,7 +147,7 @@ class AutoguideAgent:
                 self.global_memory.add(new_status, new_guideline)
             
     def build_infer_prompt(self, env_idx, init_ob, guidelines):
-        short_memories = self.short_memory.recall()
+        short_memories = self.short_memory.recall(with_status_summary=False)
         local_memories = self.local_memory.recall(env_idx)
         if len(local_memories) > 3:
             local_memories = local_memories[-3:]
@@ -197,7 +196,7 @@ class AutoguideAgent:
         select_index = []
         match = re.search(pattern, selection_result)
         if match:
-            select_index_str = match.group(1).strip()
+            select_index_str = match.group().strip()
             if select_index_str:
                 select_index = [int(index) for index in select_index_str.split(',') if is_convertible_to_int(index)]
         return select_index

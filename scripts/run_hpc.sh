@@ -2,10 +2,10 @@ source ./set_api.sh
 
 cd ..
 python src/main.py \
-        --num_trials 1 \
-        --num_envs 20 \
+        --num_trials 5 \
+        --num_envs 134 \
         --run_name "hpc_logs_t1e20" \
-        --model "gpt-3.5-turbo"  \
+        --model "gpt-4o-mini"  \
         --agent "hpc"   \
         --env "alfworld" \
         # --is_vector
