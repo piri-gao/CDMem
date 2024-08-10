@@ -128,11 +128,11 @@ class AutoguideAgent:
             self.local_memory.add(env_idx, reflection)
             
     def update_global_memory(self, history_log, trial_idx, env_idx):
+        success_traj = history_log.split("Here is the task:")[-1].strip()
         for idx in range(trial_idx):
             with open(self.logger.trial_log_paths[idx], 'r') as f:
                 full_log = f.read()
             fail_traj = full_log.split("#####\n\n#####")[env_idx].split("Here is the task:")[-1].split("STATUS:")[0].strip()
-            success_traj = history_log.split("Here is the task:")[-1].strip()
             guideline_extraction_prompt = self.build_guideline_extraction_prompts(fail_traj, success_traj)
             extraction_result = self.llm(guideline_extraction_prompt)
             new_status, new_guideline = self._parser_extraction_result(extraction_result)
@@ -147,7 +147,7 @@ class AutoguideAgent:
                 self.global_memory.add(new_status, new_guideline)
             
     def build_infer_prompt(self, env_idx, init_ob, guidelines):
-        short_memories = self.short_memory.recall(with_status_summary=False)
+        short_memories = self.short_memory.recall(with_status_summary=True)
         local_memories = self.local_memory.recall(env_idx)
         if len(local_memories) > 3:
             local_memories = local_memories[-3:]

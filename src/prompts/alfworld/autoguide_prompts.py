@@ -8,7 +8,7 @@ class AutoguidePromptBuilder:
         if len(local_memories) > 0:
             query += '\n\nYour memory for the task below:'
             for i, m in enumerate(local_memories):
-                query += f'\nTrial {i}:\n{m.strip()}'
+                query += f'\nTrial {i}:{m.strip()}'
         if len(guidelines) > 0:
             query += '\nThe following are some experience you gather on a similar task of completing a household task by interacting in a household environment. Use these as references to help you perform this task:'
             for i, m in enumerate(guidelines):
@@ -30,12 +30,12 @@ class AutoguidePromptBuilder:
             for i, m in enumerate(local_memories):
                 query += f'Trial #{i}: {m}\n'
 
-        query += '\n\nNew plan:'
+        query += '\nYour Job is to generate your new plan in one concise sentence. Directly output the content of the plan without including the word "plan."'
         return query
 
     def get_pair_guidelines_prompts(self, fail_traj, success_traj):
         query = f'''
-You are a housekeeper robot. The agent was placed in a household environment and a task to complete. You will be provided with a failed and a successful trajectory of the same task. What is the first action that differs between the two trajectories? Why do you think it makes one trajectory failed and the other successful? Based on your answer, generate an action guideline to make future task avoid the same mistake. The guideline should specify what to do in what situation in the format of "When in what status,  you should (or should not)... ". For the 'When in what status' part, directly use the words in SUMMARIZATION. Here are two examples:Example 1: When looking for an object, if you want to find a kitchen-related object like a spatula, you should start from the most possible locations.Example 2: When looking for an object and found the desired object at the location, You should only take the exact object that you want.Strictly follow what the successful trajectory does and never suggest actions that the successful trajectory didn't do. When referring to actions, use the allowed action format. You should make your answer concise, limit your answer within 128 tokens,and put your answer in the format: 'Reasoning: ...Guideline: ...'.
+You are a housekeeper robot. The agent was placed in a household environment and a task to complete. You will be provided with a failed and a successful trajectory of the same task. What is the first action that differs between the two trajectories? Why do you think it makes one trajectory failed and the other successful? Based on your answer, generate an action guideline to make future task avoid the same mistake. The guideline should specify what to do in what situation in the format of "When in what status,  you should (or should not)... ". For the 'When in what status' part, directly use the words in SUMMARIZATION. Here are two examples:Example 1: When looking for an object,  you should start from the most possible locations.Example 2: When looking for an object and found the desired object at the location, You should only take the exact object that you want.Strictly follow what the successful trajectory does and never suggest actions that the successful trajectory didn't do. When referring to actions, use the allowed action format. You should make your answer concise, limit your answer within 128 tokens,and put your answer in the format: 'Reasoning: ...Guideline: ...'.
 
 Failed Trajectory: {fail_traj}
 Successful Trajectory: {success_traj}
@@ -96,7 +96,7 @@ Now it's your turn:
 You are a housekeeper robot. The agent was placed in a household environment and a task to complete. A task trajectory can be long. Therefore the assistant summarizes the status of each step.For different task with the same status, the summarization should be the same, therefore please ignore any information about instructions or products.You will be provided with the following:
 1. A list of summarizations the assistant saw in the past.
 2. A newly generated summarization.
-Please determine if any summarization from the list matches the exact same status as the newly generated one. If yes, answerthe index of the corresponding summarization, for example "Answer: 2"; otherwise, "Answer: None".
+Please determine if any summarization from the list matches the exact same status as the newly generated one. If yes, answer the index of the corresponding summarization, for example "Answer: 2"; otherwise, "Answer: None".
 
 Seen Summarizations:{seen_summaries}
 Newly Generated Summarization:{new_status}

@@ -78,13 +78,7 @@ class ExpelAgent:
         print(init_ob)
         self.short_memory.reset()
         while cur_step < self.max_steps:
-            if self.global_memory.length() >= 2:
-                guideline_selection_prompt = self.build_guideline_selection_prompts(init_ob)
-                selected_guidelines = self.llm(guideline_selection_prompt)
-                selected_index = self._parser_selection_result(selected_guidelines)
-            else:
-                selected_guidelines = self.global_memory.recall()
-            infer_prompt = self.build_infer_prompt(env_idx, init_ob, selected_guidelines)
+            infer_prompt = self.build_infer_prompt(env_idx, init_ob)
             action = self.llm(infer_prompt, stop=["\n"]).strip()
             action = self.env.action_parser(action)
             self.short_memory.add("action", action)
@@ -95,15 +89,15 @@ class ExpelAgent:
                 print(print_text)
                 sys.stdout.flush()
             if done:
-                history_log = self.build_infer_prompt(env_idx, init_ob, selected_guidelines)
+                history_log = self.build_infer_prompt(env_idx, init_ob)
                 return history_log, True
             elif exhausted:
-                history_log = self.build_infer_prompt(env_idx, init_ob, selected_guidelines)
+                history_log = self.build_infer_prompt(env_idx, init_ob)
                 return history_log, False
             if action.startswith('think:'):
                 continue
             cur_step += 1
-        history_log = self.build_infer_prompt(env_idx, init_ob, selected_guidelines)
+        history_log = self.build_infer_prompt(env_idx, init_ob)
         return history_log, False
     
     def update_local_memory(self, log_str, env_idx):
@@ -113,23 +107,29 @@ class ExpelAgent:
             self.local_memory.add(env_idx, reflection)
             
     def update_global_memory(self, history_log, trial_idx, env_idx):
+        success_traj = history_log.split("Here is the task:")[-1].strip()
+        existing_rules = self.global_memory.recall()
+        success_guidelines_prompt = self.build_success_guidelines_prompts(success_traj, existing_rules)
+        new_guidelines = self.llm(success_guidelines_prompt)
+        self.global_memory.update(new_guidelines)
         for idx in range(trial_idx):
             with open(self.logger.trial_log_paths[idx], 'r') as f:
                 full_log = f.read()
             fail_traj = full_log.split("#####\n\n#####")[env_idx].split("Here is the task:")[-1].split("STATUS:")[0].strip()
-            success_traj = history_log.split("Here is the task:")[-1].strip()
-            guideline_extraction_prompt = self.build_guideline_extraction_prompts(fail_traj, success_traj)
-            extraction_result = self.llm(guideline_extraction_prompt)
-            new_guideline = self._parser_extraction_result(extraction_result)
-            self.global_memory.add(new_guideline)
+            pair_guidelines_prompt = self.build_pair_guidelines_prompts(fail_traj, success_traj, existing_rules)
+            new_guidelines = self.llm(pair_guidelines_prompt)
+            self.global_memory.update(new_guidelines)
 
-    def build_infer_prompt(self, env_idx, init_ob, guidelines):
+    def build_infer_prompt(self, env_idx, init_ob):
         short_memories = self.short_memory.recall()
         local_memories = self.local_memory.recall(env_idx)
+        existing_rules = self.global_memory.recall()
         if len(local_memories) > 3:
             local_memories = local_memories[-3:]
         fewshots = self.fewshot_builder.get_inference_fewshots(self.env.name)
-        query = self.prompt_builder.get_inference_prompts(init_ob, fewshots, local_memories, short_memories, guidelines)
+        query = self.prompt_builder.get_inference_prompts(init_ob, fewshots, local_memories, short_memories, existing_rules)
+        # if existing_rules and existing_rules != 'None':
+        #     import pdb;pdb.set_trace()
         return query
         
     def build_reflection_prompt(self, log_str, env_idx):
@@ -140,31 +140,14 @@ class ExpelAgent:
         query = self.prompt_builder.get_reflection_prompts(log_str, fewshots, local_memories)
         return query
     
-    def build_guideline_extraction_prompts(self, fail_traj, success_traj):
-        query = self.prompt_builder.get_pair_guidelines_prompts(fail_traj, success_traj)
+    def build_pair_guidelines_prompts(self, fail_traj, success_traj, existing_rules):
+        query = self.prompt_builder.get_pair_guidelines_prompts(fail_traj, success_traj, existing_rules)
         return query
     
-    def build_guideline_selection_prompts(self, init_ob):
-        short_memories = self.short_memory.recall()
-        guidelines = self.global_memory.recall()
-        query = self.prompt_builder.get_guideline_selection_prompts(guidelines, init_ob, short_memories)
+    def build_success_guidelines_prompts(self, success_trajs, existing_rules):
+        query = self.prompt_builder.get_success_guidelines_prompts(success_trajs, existing_rules)
         return query
-        
-    def _parser_extraction_result(self, extraction_result):
-        pattern = re.compile(r'Guideline:([\s\S]*)')
-        match = pattern.search(extraction_result)
-        guideline = ''
-        if match:
-            guideline = match.group(1).strip()
-        return guideline
     
-    def _parser_selection_result(self, selection_result):
-        pattern = r'(?<=\[)[^\]]+(?=\])'
-        select_index = ''
-        match = re.search(pattern, selection_result)
-        if match:
-            select_index = match.group(1).strip()
-        return select_index
         
         
 class Logger:

@@ -5,8 +5,9 @@ Exemplar#1:
 Expert Observation #0: I can heat egg with microwave, I can cool egg with fridge.
 Expert Observation #1: None
 Expert Observation #2: I can cool bowel with fridge
+Past Summary: None
 
-*** Summary Result***
+*** Output ***
 
 I can heat items with microwave. I can cool items with fridge.
 
@@ -14,11 +15,11 @@ Exemplar#2:
 
 *** Input ***
 
-Expert Observation #0: None.
+Expert Observation #0: None
 Expert Observation #1: I can clean soapbar with sinkbasin.
 Expert Observation #2: I can cool bread with fridge.
 Past Summary: I can heat bread with microwave.
 
-*** Summary Result ***
+*** Output ***
 
 I can heat items with microwave. I can clean items with sinkbasin. I can cool items with fridge.

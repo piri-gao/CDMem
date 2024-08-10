@@ -9,5 +9,5 @@ python src/main.py \
         --agent "reflect"   \
         --env "alfworld" \
         # --is_resume \
-        # --resume_dir logs/reflexion_logs_t5e67_0628_120045_test \
-        # --start_trial_num 3
+        # --resume_dir logs/reflexion_logs_t5e67_0808_215947 \
+        # --start_trial_num 1

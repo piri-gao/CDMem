@@ -62,14 +62,11 @@ class LocalMemory:
         
 class GlobalMemory:
     def __init__(self, logging_dir):
-        self.history = []
+        self.history = 'None'
     
-    def add(self, guideline):
-        self.history.append(guideline)
+    def update(self, guidelines):
+        self.history = guidelines
 
     def recall(self):
         return self.history
-    
-    def length(self):
-        return len(self.history)
         

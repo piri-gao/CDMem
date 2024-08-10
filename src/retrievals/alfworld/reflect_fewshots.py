@@ -22,7 +22,7 @@ class ReflectFewshotBuilder:
     def get_inference_fewshots(self, name):
         for i, (k, v) in enumerate(PREFIXES.items()):
             if name.startswith(k):
-                return d[f'react_{v}_1'] + d[f'react_{v}_0']
+                return d[f'react_{v}_1'] + '\n' + d[f'react_{v}_0']
                 
     def get_reflection_fewshots(self):
         with open("./prompts/reflexion_few_shot_examples.txt", 'r') as f:

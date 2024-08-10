@@ -8,7 +8,7 @@ class ReflectPromptBuilder:
         if len(local_memories) > 0:
             query += '\n\nYour memory for the task below:'
             for i, m in enumerate(local_memories):
-                query += f'\nTrial {i}:\n{m.strip()}'
+                query += f'\nTrial {i}:{m.strip()}'
         query += f"\nHere is the task:\n{init_ob}"
         query += short_memories
         return query
@@ -26,7 +26,7 @@ class ReflectPromptBuilder:
             for i, m in enumerate(local_memories):
                 query += f'Trial #{i}: {m}\n'
 
-        query += '\n\nNew plan:'
+        query += '\nYour Job is to generate your new plan in one concise sentence. Directly output the content of the plan without including the word "plan."'
         return query
 
         

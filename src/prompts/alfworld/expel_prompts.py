@@ -8,11 +8,9 @@ class ExpelPromptBuilder:
         if len(local_memories) > 0:
             query += '\n\nYour memory for the task below:'
             for i, m in enumerate(local_memories):
-                query += f'\nTrial {i}:\n{m.strip()}'
-        if len(guidelines) > 0:
-            query += '\nThe following are some experience you gather on a similar task of completing a household task by interacting in a household environment. Use these as references to help you perform this task:'
-            for i, m in enumerate(guidelines):
-                query += f'\n{i}.{m.strip()}'
+                query += f'\nTrial {i}:{m.strip()}'
+        # if guidelines and guidelines != 'None':
+        #     query += f'\nThe following are some experience you gather on a similar task of completing a household task by interacting in a household environment. Use these as references to help you perform this task:\n{guidelines}\n'
         query += f"\nHere is the task:\n{init_ob}"
         query += short_memories
         return query
@@ -30,34 +28,28 @@ class ExpelPromptBuilder:
             for i, m in enumerate(local_memories):
                 query += f'Trial #{i}: {m}\n'
 
-        query += '\n\nNew plan:'
+        query += '\nYour Job is to generate your new plan in one concise sentence. Directly output the content of the plan without including the word "plan."'
         return query
 
-    def get_pair_guidelines_prompts(self, fail_traj, success_traj):
+    def get_pair_guidelines_prompts(self, fail_traj, success_traj, existing_rules):
         query = f'''
-You are a housekeeper robot. The agent was placed in a household environment and a task to complete. You will be provided with a failed and a successful trajectory of the same task. What is the first action that differs between the two trajectories? Why do you think it makes one trajectory failed and the other successful? Based on your answer, generate an action guideline to make future task avoid the same mistake. The guideline should specify what to do in what situation in the format of "When in what status, (optional: if you want to ...) you should (or should not)... (optional: ashort example for demonstration. )". For the 'When in what status' part, directly use the words in SUMMARIZATION.Here are two examples:Example 1: When looking for an object, if you want to find a kitchen-related object like a spatula, you should start from themost possible locations.Example 2: When looking for an object and found the desired object at the location, You should only take the exact object thatyou want.Strictly follow what the successful trajectory does and never suggest actions that the successful trajectory didn't do. When referring to actions, use the allowed action format. You should make your answer concise, limit your answer within 128 tokens,and put your answer in the format: 'Reasoning: ...Guideline: ...'.
+You are a housekeeper robot. The agent was placed in a household environment and a task to complete. Here are the two previous trials to compare and critique:
 
-Failed Trajectory: {fail_traj}
-Successful Trajectory: {success_traj}
-'''
-        return query
+SUCCESSFUL TRIAL:
+{success_traj}
 
-    def get_guideline_selection_prompts(self, guideline_list, init_ob, short_memories):
-        if len(guideline_list) > 0:
-            guidelines = ''
-            for i, m in enumerate(guideline_list):
-                guidelines += f'\n{i}.{m.strip()}'
-        query = f'''
-You are a housekeeper robot. The agent was placed in a household environment and a task to complete. . You will be equipped with the following resources:
-1. A list of action guidelines with valuable guidelines.
-2. Trajectory history, which includes recent observations and actions.
-Not all guidelines are useful to generate the next action. Please select the guidelines that are useful and relevant to the nextaction given the trajectory and recent observations. To generate the next action, which guidelines from the provided guidelinesare most useful to directly tell you what to do for the next action? You can select up to 2 guidelines, and put the indices of theselected guidelines in a python list. For example if you select guideline 1, 5, answer: [1, 5]. If none of them are useful forgenerating the next action, answer the empty list [].
+FAILED TRIAL:
+{fail_traj}
 
-Guidelines:
-{guidelines}
-Trajectory history:
-{init_ob}
-{short_memories}
+Here are the EXISTING RULES:
+{existing_rules}
+
+By examining and contrasting to the successful trial, and the list of existing rules, Your job is to generate a new list of rules. The new list of rules is GENERAL and HIGH LEVEL critiques of the failed trial or proposed way of Thought so they can be used to avoid similar failures when encountered with different questions in the future. Have an emphasis on critiquing how to perform better Thought and Action. 
+Here are some example rules:
+1. When searching for an item, consider the nature of the item and its typical usage. For example, a pan is more likely to be found on a stoveburner or countertop rather than in a cabinet or drawer
+2. lf an attempt to interact with an item fails or does not progress the task, reassess the situation and consider alternative actions or locations before repeating the same action
+3. Always confrm the presence of an item before attempting to interact with it.
+Note that the new list of rules contains up to 5 rules and Do Not put a blank line between two rules. Now it's your Turn.  
 '''
         return query
 
@@ -70,6 +62,11 @@ Here are the successful trials:
 Here are the EXISTING RULES:
 {existing_rules}
 
-By examining the successful trials, and the list of existing rules, generate a new list of rules which are general and high level insights of the successful trials or proposed way of Thought so they can be used as helpful tips to different tasks in the future.      
+By examining the successful trials, and the list of existing rules, Your job is to generate a new list of rules which are general and high level insights of the successful trials or proposed way of Thought so they can be used as helpful tips to different tasks in the future. 
+Here are some example rules: 
+1. When searching for an item, consider the nature of the item and its typical usage. For example, a pan is more likely to be found on a stoveburner or countertop rather than in a cabinet or drawer
+2. lf an attempt to interact with an item fails or does not progress the task, reassess the situation and consider alternative actions or locations before repeating the same action
+3. Always confrm the presence of an item before attempting to interact with it.
+Note that the new list of rules contains up to 5 rules and Do Not put a blank line between two rules. Now it's your Turn.  
 '''
         return query

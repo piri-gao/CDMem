@@ -5,7 +5,7 @@ OK.
 OK.
 > go to fridge 1
 The fridge 1 is closed.
-SUMMARIZATION: Looking for an object here, but it isclosed.
+SUMMARIZATION: Looking for an object here, but it is closed.
 > open fridge 1 You open the fridge 1. 
 The fridge 1 is open. In it, you see a lettuce 2, a mug 2, a potato 2, and a tomato 1.
 SUMMARIZATION: Looking for an object, but it's not here.
@@ -17,8 +17,8 @@ On the diningtable 1, you see nothing.
 SUMMARIZATION: Looking for an object, but it's not here.
 > go to garbagecan 1
 On the garbagecan 1, you see a apple 3, and a egg 3.
-SUMMARIZATION: Looking for an object and found thedesired object here.
-> think: Now I find an apple (3). Next, I need to take it.
+SUMMARIZATION: Looking for an object and found the desired object here.
+> think: Now I find an apple (3). Next, I need to take it. 
 OK.
 > take apple 3 from garbagecan 1
 You pick up the apple 3 from the garbagecan 1.
