@@ -5,7 +5,7 @@ import copy
 
 FOLDER = r'C:\Users\cxy\PycharmProjects\HippocampusAgent\prompts'
 PROMPT_FILE = 'science_world_prompts.jsonl'
-with open(os.path.join(FOLDER, PROMPT_FILE), 'r') as f:
+with open(os.path.join(FOLDER, PROMPT_FILE), 'r', encoding='utf-8') as f:
     d = json.load(f)
 
 PREFIXES = {
@@ -74,12 +74,18 @@ class HPCFewshotBuilder:
         #     return '\n\n'.join(examples)
         # else:
         #     return ''
-        return self._default_inference_fewshots(name)
+        map_list = [7, 11, 12, 13, 14, 18, 20, 21, 22, 24]
+        full_map_list = []
+        for item in map_list:
+            for i in range(5):
+                full_map_list.append(item)
+        name_to_map = full_map_list[name]
+        return self._default_inference_fewshots(name_to_map)
                          
     def _ids2example(self, logging_dir, example_idx):
         env_idx, trial_idx = example_idx
         trial_path = os.path.join(logging_dir, f'trial_{trial_idx}.log')
-        with open(trial_path, 'r') as f:
+        with open(trial_path, 'r', encoding='utf-8') as f:
             trial_log = f.read()
         example_log = trial_log.split('#####\n\n#####')[env_idx].split("Here is the task:")[-1].replace("STATUS: OK", '').replace("#####", '').strip()
         return example_log
@@ -90,31 +96,31 @@ class HPCFewshotBuilder:
         return d[str(name)]
         
     def get_expert_fewshots(self):
-        with open("./prompts/expert_few_shot_example.txt", 'r') as f:
+        with open(r"C:\Users\cxy\PycharmProjects\HippocampusAgent\prompts\expert_few_shot_example.txt", 'r', encoding='utf-8') as f:
             FEW_SHOT_EXAMPLES = f.read()
         return FEW_SHOT_EXAMPLES
                 
     def get_reflection_fewshots(self, is_success):
         if is_success:
-            with open("./prompts/reflection_few_shot_example_success.txt", 'r') as f:
+            with open(r"C:\Users\cxy\PycharmProjects\HippocampusAgent\prompts\reflection_few_shot_example_success.txt", 'r', encoding='utf-8') as f:
                 FEW_SHOT_EXAMPLES = f.read()
         else:
-            with open("./prompts/reflection_few_shot_example_fail.txt", 'r') as f:
+            with open(r"C:\Users\cxy\PycharmProjects\HippocampusAgent\prompts\reflection_few_shot_example_fail.txt", 'r', encoding='utf-8') as f:
                 FEW_SHOT_EXAMPLES = f.read()
         return FEW_SHOT_EXAMPLES
     
     def get_summary_fewshots(self, mode, is_success=None):
         if mode == 'env':
-            with open("./prompts/env_few_shot_example.txt", 'r') as f:
+            with open(r"C:\Users\cxy\PycharmProjects\HippocampusAgent\prompts\env_few_shot_example.txt", 'r', encoding='utf-8') as f:
                 FEW_SHOT_EXAMPLES = f.read()
             return FEW_SHOT_EXAMPLES
         elif mode == 'task':
             if is_success:
-                with open("./prompts/task_few_shot_example_success.txt", 'r') as f:
+                with open(r"C:\Users\cxy\PycharmProjects\HippocampusAgent\prompts\task_few_shot_example_success.txt", 'r', encoding='utf-8') as f:
                     FEW_SHOT_EXAMPLES = f.read()
                 return FEW_SHOT_EXAMPLES
             else:
-                with open("./prompts/task_few_shot_example_fail.txt", 'r') as f:
+                with open(r"C:\Users\cxy\PycharmProjects\HippocampusAgent\prompts\task_few_shot_example_fail.txt", 'r', encoding='utf-8') as f:
                     FEW_SHOT_EXAMPLES = f.read()
                 return FEW_SHOT_EXAMPLES
         else:

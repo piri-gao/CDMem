@@ -3,8 +3,8 @@ source ./set_openai.sh
 cd ..
 python src/main.py \
         --num_trials 5 \
-        --num_envs 20 \
-        --run_name "scworld_logs_webshop" \
+        --num_envs 50 \
+        --run_name "scworld_logs_hpc" \
         --model "gpt-4o-mini"  \
         --agent "hpc"   \
         --env "scienceworld" \

@@ -7,7 +7,11 @@ class ShortMemory:
         self.history: List[Dict[str, str]] = []
 
     def add(self, label: str, value: str) -> None:
-        assert label in ['action', 'observation']
+        assert label in ['action', 'observation', 'think', 'look']
+        if label == 'look':
+            # remove all exist look
+            self.history = [item for item in self.history if item['label'] != 'look']
+
         self.history += [{
             'label': label,
             'value': value,
@@ -25,9 +29,17 @@ class ShortMemory:
                 s += f'> {item["value"]}'
             elif item['label'] == 'observation':
                 s += item['value']
+            elif item['label'] == 'think':
+                s += f'> think: {item["value"]}\nOK.\n'
+            elif item['label'] == 'look':
+                s += f'Your current location:\n{item["value"]}\n'
             if i != len(self.history) - 1:
                 s += '\n'
         return s
+
+    def recent_actions(self) -> List[str]:
+        actions = [item['value'] for item in self.history if item['label'] == 'action']
+        return actions[-3:]
     
 class LocalMemory:
     def __init__(self, num_envs):

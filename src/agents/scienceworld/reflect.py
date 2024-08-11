@@ -4,6 +4,11 @@ import json
 
 from typing import List, Callable
 
+from tqdm import tqdm
+
+from src.utils.scworld_utils import action_type_description, findValidActionNew
+
+
 class ReflectAgent:
     """
     Relection Agent class.
@@ -38,22 +43,45 @@ class ReflectAgent:
         if self.start_trial_num > 0:
             trial_env_configs_log_path: str = os.path.join(self.logging_dir, f'env_results_trial_{self.start_trial_num-1}.json')
             self.local_memory.resume(trial_env_configs_log_path)
+        self.task_names = self.env.getTaskNames()
+        self.rooms = ["hallway", "greenhouse", "kitchen", "bathroom", "outside", "workshop", "art studio",
+                      "foundry", "bedroom", "living room"]
+        self.current_room = 'hallway'
     
     def run(self):
         world_log_path = os.path.join(self.logging_dir, 'world.log')
-        for trial_idx in range(self.start_trial_num, self.num_trials):
+        for trial_idx in tqdm(range(self.start_trial_num, self.num_trials)):
+
             with open(world_log_path, 'a') as wf:
                 wf.write(f'\n\n***** Start Trial #{trial_idx} *****\n\n')
+
             trial_log_path: str = os.path.join(self.logging_dir, f'trial_{trial_idx}.log')
             trial_env_configs_log_path: str = os.path.join(self.logging_dir, f'env_results_trial_{trial_idx}.json')
+
             if os.path.exists(trial_log_path):
                 open(trial_log_path, 'w').close()
             if os.path.exists(trial_env_configs_log_path):
                 open(trial_env_configs_log_path, 'w').close()
             num_successes: int = 0
             num_additional_successes: int = 0
-            for env_idx in range(self.num_envs):
+
+            short_jobs = [7, 11, 12, 13, 14, 18, 20, 21, 22, 24]
+            variations = [0, 1, 2, 3, 4]
+            # create a list of list of intersection of short_jobs and variations, e.g., [[7, 0], [7, 1], ..., [24, 4]]
+            job_params = []
+            for job_id in short_jobs:
+                for variation in variations:
+                    job_params.append([job_id, variation])
+
+            for env_idx in tqdm(range(self.num_envs)): # assume 50 envs
+
+                job_id = job_params[env_idx][0]
+                var_id = job_params[env_idx][1]
+                task_name = self.task_names[job_id]
+                self.env.load(task_name, var_id)
                 init_ob, info = self.env.reset()
+                task_description = self.env.taskdescription()[18:].strip()
+
                 if self.local_memory.is_success(env_idx):
                     num_successes += 1
                     with open(world_log_path, 'a') as wf:
@@ -61,7 +89,7 @@ class ReflectAgent:
                     with open(trial_log_path, 'a') as wf:
                         wf.write(f'\n#####\n\nEnvironment #{env_idx}: Success\n\n#####\n')
                     continue
-                history_log, is_success = self.run_trajectory(env_idx, init_ob)
+                history_log, is_success = self.run_trajectory(env_idx, init_ob, task_description, info=info)
                 if is_success:
                     status_str: str = f'Environment #{env_idx} Trial #{trial_idx}: SUCCESS'
                     self.local_memory.set_success(env_idx)
@@ -95,37 +123,55 @@ ACCURACY: {round(num_successes / self.num_envs, 2)}
                 json.dump(self.local_memory.history, wf, indent=4)
             with open(world_log_path, 'a') as wf:
                 wf.write(f'\n\n***** End Trial #{trial_idx} *****\n\n')
-            self.env.reload()
+            # self.env.reload()
     
-    def run_trajectory(self, env_idx, init_ob, to_print=True):
+    def run_trajectory(self, env_idx, init_ob, task_description, to_print=True, info=None):
         cur_step = 0
         while cur_step < self.max_steps:
-            infer_prompt = self.build_infer_prompt(env_idx, init_ob)
-            action = self.llm(infer_prompt, stop=["\n"]).strip()
-            if ">" in action:
-                action = action.replace(">", "").strip()
-            action_words = action.split(" ")
-            if "put" in action_words:
-                for i in range(len(action_words)):
-                    if action_words[i].strip().lower() == "in" or action_words[i].strip().lower() == 'on':
-                        action_words[i] = "in/on"
-                        action = " ".join(action_words)
+
+            infer_prompt = self.build_infer_prompt(env_idx, init_ob, task_description)
+
+            system_msg = """You are the agent to interact in a household to solve a task.
+                                You need to output your thinking/reason/plan to solve the task, and select a correct action to execute.
+
+                                Please using json format to output, e.g.,
+                                The json output is:
+                                {
+                                    "reason": "To solve the task, I need to be in same location as water and have substance alone in a single container",
+                                    "action": "go to the kitchen"
+                                }
+                                """
+
+            response = self.llm(infer_prompt, sys_msg=system_msg, use_json=True)
+            reason = response['reason']
+            action = response['action']
+            # print('\n\n=== GPT action begin ===\n', response, '\n\n=== GPT action end ===\n')
+            action = action.replace('(', '').replace(')', '')
+            # action = self.env.action_parser(action)
+            self.short_memory.add("think", reason)
             self.short_memory.add("action", action)
-            observation, reward, done, exhausted, info = self.env.step(action)
+            action = findValidActionNew([action], self.env, info['look'],
+                                        recent_actions=self.short_memory.recent_actions())
+            # print('\n\n=== Correct action begin ===\n', action, '\n\n=== Correct action end ===\n')
+            observation, reward, done, info = self.env.step(action)
             self.short_memory.add("observation", observation)
-            if to_print:
-                print(f'> {action}\n{observation}')
-                sys.stdout.flush()
-            if action.startswith('think:'):
-                continue
+            if action.__contains__('go to') and observation.__contains__('move to'):
+                for room in self.rooms:
+                    if observation.__contains__(room):
+                        self.current_room = room
+                        self.short_memory.add("look", info['look'])
+                        break
+
             if done:
-                history_log = self.build_infer_prompt(env_idx, init_ob)
-                return history_log, True
-            elif exhausted:
-                history_log = self.build_infer_prompt(env_idx, init_ob)
-                return history_log, False
+                history_log = self.build_infer_prompt(env_idx, init_ob, task_description)
+                score = info['score']
+                if score == 100:
+                    return history_log, True
+                else:
+                    return history_log, False
+
             cur_step += 1
-        history_log = self.build_infer_prompt(env_idx, init_ob)
+        history_log = self.build_infer_prompt(env_idx, init_ob, task_description)
         return history_log, False
     
     def update_local_memory(self, log_str, env_idx):
@@ -134,13 +180,14 @@ ACCURACY: {round(num_successes / self.num_envs, 2)}
             reflection = self.llm(reflection_prompt) 
             self.local_memory.add(env_idx, reflection)
             
-    def build_infer_prompt(self, env_idx, init_ob):
+    def build_infer_prompt(self, env_idx, init_ob, task_description):
         short_memories = self.short_memory.recall()
         local_memories = self.local_memory.recall(env_idx)
         if len(local_memories) > 3:
             local_memories = local_memories[-3:]
-        fewshots = self.fewshot_builder.get_inference_fewshots(self.env.env_name)
-        query = self.prompt_builder.get_inference_prompts(init_ob, fewshots, local_memories, short_memories)
+        fewshots = self.fewshot_builder.get_inference_fewshots(env_idx)
+        action_guides = self.combine_action_guides()
+        query = self.prompt_builder.get_inference_prompts(init_ob, fewshots, local_memories, short_memories, task_description, action_guides)
         return query
         
     def build_reflection_prompt(self, log_str, env_idx):
@@ -150,3 +197,12 @@ ACCURACY: {round(num_successes / self.num_envs, 2)}
         fewshots = self.fewshot_builder.get_reflection_fewshots()
         query = self.prompt_builder.get_reflection_prompts(log_str, fewshots, local_memories)
         return query
+
+    def combine_action_guides(self):
+        guides_list = action_type_description
+        guides_str = []
+        for guide in guides_list:
+            action_type = guide.get('action_type')
+            desc = guide['desc']
+            guides_str.append(f'{action_type}: {desc}')
+        return "Action guides:\n\t" + '\n\t'.join(guides_str)

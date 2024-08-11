@@ -2,31 +2,24 @@ import numpy as np
 import re
 
 action_type_description = [
-    {"action_type": "WAIT()",
-     "desc": "wait for something to be done, for example, an object on stove to be boiled"},
-    {"action_type": "TELEPORT(room)", "desc": "directly go to a room such as TELEPORT(kitchen)"},
-    # {"action_type": "LOOK(object)", "desc": "look at an object"},
-    {"action_type": "READ(object)", "desc": "read an object such as a recipe or a book"},
-    {"action_type": "PICK(object)", "desc": "pick up an object and put it into your inventory"},
-    {"action_type": "OPEN(object)",
-     "desc": "open an object with doors before you search or put things in it. For example, OPEN(freezer), OPEN(blast furnace)."},
-    {"action_type": "ACTIVATE(object)",
-     "desc": "activate and turn on an object such as sink or stove, so that you can use it. "},
-    {"action_type": "DEACTIVATE(object)", "desc": "deactivate turn off the object"},
-    {"action_type": "EXAMINE(object)",
-     "desc": "look at an object carefully. For example, EXAMINE(apple). Note that you cannot EXAMINE a location."},
-    {"action_type": "CONNECT(object)", "desc": "connect two objects so that they become useful"},
-    {"action_type": "MOVE(object, place)", "desc": "move/place the object to a place"},
-    {"action_type": "USE(object A, object B)",
-     "desc": "use an object A on object B, for example, USE(thermometer in inventory, water) to check the temperature of water."},
-    {"action_type": "MIX(container)",
-     "desc": "mix the objects in a container such as MIX(cup containing sugar and water)"},
-    {"action_type": "DUNK(object A, object B)", "desc": "dunk object A into object B (optional)"},
-    {"action_type": "DROP(object A, object B)", "desc": "drop object A into object B (optional)"},
-    {"action_type": "POUR(object A, object B)",
-     "desc": "pour the object A into the container B; For example, POUR(red paint, glass cup)"},
-    {"action_type": "FOCUS(object)",
-     "desc": "focus on an important object that are required by the task description (e.g., a substance, a plant, an animal, and so on)."},
+    {"action_type": "wait",
+     "desc": "wait for something to be done, for example, an object on stove to be boiled. Usage: 'wait#', where # is the number of turns you want to wait. only 'wait' means wait for 10 iterations."},
+    {"action_type": "read", "desc": "read an object such as a recipe or a book. Usage: 'read recipe in inventory'"},
+    {"action_type": "pick up", "desc": "pick up an object and put it into your inventory. Usage: 'pick up metal pot'"},
+    {"action_type": "open",
+     "desc": "open an object with doors before you search or put things in it. Usage: 'open door in kitchen', 'open drawer in counter', 'open glass jar'"},
+    {"action_type": "activate",
+     "desc": "activate and turn on an object such as sink (then the water flow from it) or stove, so that you can use it. Usage: 'activate stove', 'activate sink'"},
+    {"action_type": "deactivate", "desc": "deactivate turn off the object"},
+    {"action_type": "examine",
+     "desc": "look at an object carefully. Note that you cannot examine a location. Usage: 'examine substance in metal pot', 'examine ice'"},
+    {"action_type": "move", "desc": "move/place the object to a place. Usage: 'move cupboard to red box'"},
+    {"action_type": "use",
+     "desc": "use an object A on object B, for example, For example, to check the temperature: Usage: 'use thermometer in inventory on ice', 'use thermometer in inventory on substance in metal pot'"},
+    {"action_type": "pour",
+     "desc": "pour the object A into the container B. Usage: 'pour jug into flower pot 4'"},
+    {"action_type": "focus",
+     "desc": "focus on an important object that are required by the task description (e.g., a substance, a plant, an animal, and so on). Usage: 'focus on cupboard'"},
 ]
 
 focus_on_count = {
@@ -81,23 +74,24 @@ def findValidActionNew(predictions, env, look, recent_actions):
         validActions = list(validActions)
         validActions.sort(key=lambda x: len(x))
 
-    # jaccard
-    topValue = 0.0
-    topAction = predictions[0]
-    # embPred = sbert_model.encode(pred, convert_to_tensor=True)
-    tokensPred = predictions[0].split(" ")
-    uniqueTokensPred = set(tokensPred)
-
-    for validAction in validActions:
-        tokensAction = validAction.split(" ")
-        uniqueTokensAction = set(tokensAction)
-
-        intersection = uniqueTokensPred.intersection(uniqueTokensAction)
-        if (len(intersection) > topValue):
-            topAction = validAction
-            topValue = len(intersection)
-
-    # Sanitize top action
-    topAction = re.sub(r'[^A-Za-z0-9 ]+', '', topAction)
-    action = topAction
-    return action
+    return predictions[0]
+    # # jaccard
+    # topValue = 0.0
+    # topAction = predictions[0]
+    # # embPred = sbert_model.encode(pred, convert_to_tensor=True)
+    # tokensPred = predictions[0].split(" ")
+    # uniqueTokensPred = set(tokensPred)
+    #
+    # for validAction in validActions:
+    #     tokensAction = validAction.split(" ")
+    #     uniqueTokensAction = set(tokensAction)
+    #
+    #     intersection = uniqueTokensPred.intersection(uniqueTokensAction)
+    #     if (len(intersection) > topValue):
+    #         topAction = validAction
+    #         topValue = len(intersection)
+    #
+    # # Sanitize top action
+    # topAction = re.sub(r'[^A-Za-z0-9 ]+', '', topAction)
+    # action = topAction
+    # return action

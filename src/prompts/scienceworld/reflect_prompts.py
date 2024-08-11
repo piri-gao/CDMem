@@ -2,14 +2,20 @@ class ReflectPromptBuilder:
     def __init__(self):
         pass
     
-    def get_inference_prompts(self, init_ob, fewshots, local_memories, short_memories):
-        query = 'Interact with a household to solve a task. You may take maximum of 20 steps. Here are two examples.\n'
-        query += fewshots
+    def get_inference_prompts(self, init_ob, fewshots, local_memories, short_memories, task_description, action_guides):
+        query = f"""
+        You are the agent to interact in a household to solve a task. Here is an example. Please read this example carefully and learn valid actions and the environment.
+
+        {fewshots}
+
+        Goal Task: Now, based on the task background, task instruction, reference exemplars, functions of containers, locations of items and past reflections to output the correct action.
+        """
         if len(local_memories) > 0:
             query += '\n\nYour memory for the task below:'
             for i, m in enumerate(local_memories):
                 query += f'\nTrial {i}:\n{m.strip()}'
-        query += f"\nHere is the task:\n{init_ob}"
+        query += f"Here is action guide:\n{action_guides}\n"
+        query += f"\nHere is your real task:\n{init_ob}\n{task_description}\n"
         query += short_memories
         return query
                 

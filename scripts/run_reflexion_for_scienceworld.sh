@@ -3,8 +3,9 @@ source ./set_api.sh
 cd ..
 python src/main.py \
         --num_trials 5 \
-        --num_envs 67 \
-        --run_name "reflexion_logs_t5e67" \
-        --model "gpt-3.5-turbo"  \
+        --num_envs 50 \
+        --run_name "scworld_logs_reflect" \
+        --model "gpt-4o-mini"  \
         --agent "reflect"   \
-        --env "scienceworld"
+        --env "scienceworld" \
+        --start_trial_num 0

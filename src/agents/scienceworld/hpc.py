@@ -6,7 +6,9 @@ import itertools
 
 from typing import List, Callable
 
-from src.utils.scworld_utils import findValidActionNew
+from tqdm import tqdm
+
+from src.utils.scworld_utils import findValidActionNew, action_type_description
 
 
 class HPCAgent:
@@ -57,9 +59,19 @@ class HPCAgent:
             self.logger.log_world_start(trial_idx)
             num_successes: int = 0
             num_additional_successes: int = 0
-            for env_idx in range(self.num_envs):  # consider 100 envs
-                task_name = self.task_names[env_idx]
-                self.env.load(task_name, 0)
+            short_jobs = [7, 11, 12, 13, 14, 18, 20, 21, 22, 24]
+            variations = [0, 1, 2, 3, 4]
+            # create a list of list of intersection of short_jobs and variations, e.g., [[7, 0], [7, 1], ..., [24, 4]]
+            job_params = []
+            for job_id in short_jobs:
+                for variation in variations:
+                    job_params.append([job_id, variation])
+
+            for env_idx in tqdm(range(self.num_envs)):  # consider 50 envs
+                job_id = job_params[env_idx][0]
+                var_id = job_params[env_idx][1]
+                task_name = self.task_names[job_id]
+                self.env.load(task_name, var_id)
                 init_ob, info = self.env.reset()
                 task_description = self.env.taskdescription()[18:].strip()
                 # print()
@@ -86,10 +98,10 @@ class HPCAgent:
                 self.logger.log_local_memory(trial_idx)
                 self.update_global_memory(expert_trajectory, env_idx, trial_idx)
                 self.logger.log_global_memory(trial_idx)
-            self.env.close()
+            # self.env.close()
             # self.logger.log_trial_end(trial_idx, num_successes, num_additional_successes)
             self.logger.log_world_end(trial_idx, num_successes, num_additional_successes)
-            self.env.reload()
+            # self.env.reload()
 
     def run_trajectory(self, env_idx, init_ob, task_description, to_print=True, info=None):
         cur_step = 0
@@ -98,17 +110,28 @@ class HPCAgent:
         while cur_step < self.max_steps:
             infer_prompt = self.build_infer_prompt(env_idx, init_ob, task_description)
 
-            print('\n\n=== Infer prompt begin ===\n', infer_prompt, '\n\n=== Infer prompt end===\n')
+            # print('\n\n=== Infer prompt begin ===\n', infer_prompt, '\n\n=== Infer prompt end===\n')
 
-            response = self.llm(infer_prompt)
+            system_msg = """You are the agent to interact in a household to solve a task.
+                    You need to output your thinking/reason/plan to solve the task, and select a correct action to execute.
+
+                    Please using json format to output, e.g.,
+                    The json output is:
+                    {
+                        "reason": "To solve the task, I need to be in same location as water and have substance alone in a single container",
+                        "action": "go to the kitchen"
+                    }
+                    """
+
+            response = self.llm(infer_prompt, sys_msg=system_msg, use_json=True)
             reason = response['reason']
             action = response['action']
-            print('\n\n=== GPT action begin ===\n', response, '\n\n=== GPT action end ===\n')
-
+            # print('\n\n=== GPT action begin ===\n', response, '\n\n=== GPT action end ===\n')
+            action = action.replace('(', '').replace(')', '')
             # action = self.env.action_parser(action)
             self.short_memory.add("think", reason)
             self.short_memory.add("action", action)
-            # action = findValidActionNew([action], self.env, info['look'], recent_actions=self.short_memory.recent_actions())
+            action = findValidActionNew([action], self.env, info['look'], recent_actions=self.short_memory.recent_actions())
             # print('\n\n=== Correct action begin ===\n', action, '\n\n=== Correct action end ===\n')
             observation, reward, done, info = self.env.step(action)
             self.short_memory.add("observation", observation)
@@ -118,8 +141,8 @@ class HPCAgent:
                         self.current_room = room
                         self.short_memory.add("look", info['look'])
                         break
-            print('\n\n=== Observation begin ===\n', observation, '\n\n=== Observation end ===\n')
-            print('\n\n=== Look begin ===\n', info['look'], '\n\n=== Look end ===\n')
+            # print('\n\n=== Observation begin ===\n', observation, '\n\n=== Observation end ===\n')
+            # print('\n\n=== Look begin ===\n', info['look'], '\n\n=== Look end ===\n')
 
             # if to_print:
             #     print(f'> {action}\n{observation}')
@@ -165,8 +188,9 @@ class HPCAgent:
         known_obs_history, action_guidance_history = self.global_memory.recall(env_description, task_description)
         fewshots = self.fewshot_builder.get_inference_fewshots(env_idx, env_description, task_description,
                                                                self.global_memory, self.logging_dir)
+        action_guides = self.combine_action_guides()
         query = self.prompt_builder.get_inference_prompts(init_ob, fewshots, local_memories, short_memories,
-                                                          known_obs_history, action_guidance_history, task_description)
+                                                          known_obs_history, action_guidance_history, task_description, action_guides)
         return query
 
     def build_expert_prompt(self, history_log):
@@ -258,6 +282,15 @@ class HPCAgent:
         #     task_description = task_match.group(1).strip()
 
         return env_description
+
+    def combine_action_guides(self):
+        guides_list = action_type_description
+        guides_str = []
+        for guide in guides_list:
+            action_type = guide.get('action_type')
+            desc = guide['desc']
+            guides_str.append(f'{action_type}: {desc}')
+        return "Action guides:\n\t" + '\n\t'.join(guides_str)
 
 
 class Logger:
