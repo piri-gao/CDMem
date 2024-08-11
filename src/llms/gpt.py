@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 from openai import OpenAI
@@ -31,7 +32,7 @@ class GPTWrapper:
         self.model = model
                     
     def __call__(self, prompt: str, stop: List[str] = None, max_tokens: int = 256, mode: str = 'chat'):
-        print('Calling GPT, Mode:', mode)
+        # print('Calling GPT, Mode:', mode)
         try:
             cur_try = 0
             while cur_try < 6:
@@ -42,21 +43,35 @@ class GPTWrapper:
                 else:
                     raise ValueError(f"Invalid mode: {mode}, mode must be 'chat' or 'complete'.")
                 # dumb way to do this
-                print('gpt text:', text)
+                # print('gpt text:', text)
                 if len(text.strip()) >= 5:
-                    return text
+                    return json.loads(text)
                 cur_try += 1
             return ""
         except Exception as e:
-            print(prompt)
-            print(e)
+            # print(prompt)
+            # print(e)
             import sys
             sys.exit(1)
     
     # @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
     def get_chat(self, prompt: str, model: ChatModel, max_tokens: int, temperature: float = 0.0, 
                     stop_strs: Optional[List[str]] = None, is_batched: bool = False) -> str:
+        system_msg = """You are the agent to interact in a household to solve a task.
+        You need to output your thinking/reason/plan to solve the task, and select a correct action to execute.
+        
+        Please using json format to output, e.g.,
+        The json output is:
+        {
+            "reason": "To solve the task, I need to be in same location as water and have substance alone in a single container",
+            "action": "go to the kitchen"
+        }
+        """
         messages = [
+            {
+                "role": "system",
+                "content": system_msg
+            },
             {
                 "role": "user",
                 "content": prompt
@@ -73,6 +88,7 @@ class GPTWrapper:
             # max_tokens=max_tokens,
             # stop=stop_strs,
             temperature=temperature,
+            response_format={'type': 'json_object'},
         )
         # print('Calling response:', response)
         return response.choices[0].message.content

@@ -4,9 +4,9 @@ class HPCPromptBuilder:
     def __init__(self):
         pass
     
-    def get_inference_prompts(self, init_ob, fewshots, local_memories, short_memories, known_obs_history, action_guidance_history):        
+    def get_inference_prompts(self, init_ob, fewshots, local_memories, short_memories, known_obs_history, action_guidance_history, task_description):
         query = f"""
-Interact with a household to solve a task. Here is an example.
+You are the agent to interact in a household to solve a task. Here is an example.
 
 {fewshots}
 
@@ -23,7 +23,10 @@ Goal Task: Now, based on the task background, task instruction, reference exempl
         query += f"""
 
 Here is the task:
-{init_ob}{short_memories}
+{init_ob}
+
+{task_description}
+{short_memories}
 """
         return query 
     

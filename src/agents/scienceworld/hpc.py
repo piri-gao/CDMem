@@ -93,11 +93,12 @@ class HPCAgent:
         while cur_step < self.max_steps:
             infer_prompt = self.build_infer_prompt(env_idx, init_ob, task_description)
 
-            print('infer prompt:', infer_prompt)
+            print('\n\n=== Infer prompt begin ===\n', infer_prompt, '\n\n=== Infer prompt end===\n')
 
-            action = self.llm(infer_prompt, stop=["\n"]).strip()
-
-            print('get action:', action)
+            response = self.llm(infer_prompt)
+            reason = response['reason']
+            action = response['action']
+            print('\n\n=== GPT action begin ===\n', response, '\n\n=== GPT action begin ===\n')
 
             action = self.env.action_parser(action)
             self.short_memory.add("action", action)
@@ -148,7 +149,7 @@ class HPCAgent:
         fewshots = self.fewshot_builder.get_inference_fewshots(self.env.taskName, env_description, task_description,
                                                                self.global_memory, self.logging_dir)
         query = self.prompt_builder.get_inference_prompts(init_ob, fewshots, local_memories, short_memories,
-                                                          known_obs_history, action_guidance_history)
+                                                          known_obs_history, action_guidance_history, task_description)
         return query
 
     def build_expert_prompt(self, history_log):

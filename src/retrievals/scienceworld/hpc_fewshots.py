@@ -3,7 +3,7 @@ import json
 import random
 import copy
 
-FOLDER = './prompts'
+FOLDER = r'C:\Users\cxy\PycharmProjects\HippocampusAgent\prompts'
 PROMPT_FILE = 'alfworld_3prompts.json'
 with open(os.path.join(FOLDER, PROMPT_FILE), 'r') as f:
     d = json.load(f)
