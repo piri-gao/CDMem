@@ -20,7 +20,7 @@ class ScienceWorldEnv:
     Please look at that for more information on the internals of the system.
     """
 
-    def __init__(self, taskName: str = None, serverPath: str = None, envStepLimit: int = 15):
+    def __init__(self, taskName: str = None, serverPath: str = None, envStepLimit: int = 20):
         '''Start the simulator. Sets up the interface between python and the JVM.
         Also does basic init stuff.
         :param taskName: The name of the task. Will be run through the infer_task method.

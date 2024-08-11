@@ -6,6 +6,8 @@ import itertools
 
 from typing import List, Callable
 
+from src.utils.scworld_utils import findValidActionNew
+
 
 class HPCAgent:
     """
@@ -46,6 +48,9 @@ class HPCAgent:
         self.logger = Logger(self.logging_dir, self.num_trials, self.num_envs, self.start_trial_num, self.local_memory,
                              self.global_memory)
         self.task_names = self.env.getTaskNames()
+        self.rooms = ["hallway", "greenhouse", "kitchen", "bathroom", "outside", "workshop", "art studio",
+                      "foundry", "bedroom", "living room"]
+        self.current_room = 'hallway'
 
     def run(self):
         for trial_idx in range(self.start_trial_num, self.num_trials):
@@ -68,7 +73,7 @@ class HPCAgent:
                     self.logger.log_world_success(trial_idx, env_idx)
                     self.logger.log_trial_success(trial_idx, env_idx)
                     continue
-                history_log, is_success = self.run_trajectory(env_idx, init_ob, task_description)
+                history_log, is_success = self.run_trajectory(env_idx, init_ob, task_description, info=info)
                 if is_success:
                     self.logger.log_world_success(trial_idx, env_idx)
                     self.local_memory.set_success(env_idx)
@@ -86,7 +91,7 @@ class HPCAgent:
             self.logger.log_world_end(trial_idx, num_successes, num_additional_successes)
             self.env.reload()
 
-    def run_trajectory(self, env_idx, init_ob, task_description, to_print=True):
+    def run_trajectory(self, env_idx, init_ob, task_description, to_print=True, info=None):
         cur_step = 0
         # print(init_ob)
         self.short_memory.reset()
@@ -98,25 +103,37 @@ class HPCAgent:
             response = self.llm(infer_prompt)
             reason = response['reason']
             action = response['action']
-            print('\n\n=== GPT action begin ===\n', response, '\n\n=== GPT action begin ===\n')
+            print('\n\n=== GPT action begin ===\n', response, '\n\n=== GPT action end ===\n')
 
-            action = self.env.action_parser(action)
+            # action = self.env.action_parser(action)
+            self.short_memory.add("think", reason)
             self.short_memory.add("action", action)
-            observation, reward, done, exhausted, info = self.env.step(action)
+            # action = findValidActionNew([action], self.env, info['look'], recent_actions=self.short_memory.recent_actions())
+            # print('\n\n=== Correct action begin ===\n', action, '\n\n=== Correct action end ===\n')
+            observation, reward, done, info = self.env.step(action)
             self.short_memory.add("observation", observation)
-            if to_print:
-                print(f'> {action}\n{observation}')
-                sys.stdout.flush()
-            if action.startswith('think:'):
-                continue
+            if action.__contains__('go to') and observation.__contains__('move to'):
+                for room in self.rooms:
+                    if observation.__contains__(room):
+                        self.current_room = room
+                        self.short_memory.add("look", info['look'])
+                        break
+            print('\n\n=== Observation begin ===\n', observation, '\n\n=== Observation end ===\n')
+            print('\n\n=== Look begin ===\n', info['look'], '\n\n=== Look end ===\n')
+
+            # if to_print:
+            #     print(f'> {action}\n{observation}')
+            #     sys.stdout.flush()
             if done:
-                history_log = self.build_infer_prompt(env_idx, init_ob)
-                return history_log, True
-            elif exhausted:
-                history_log = self.build_infer_prompt(env_idx, init_ob)
-                return history_log, False
+                history_log = self.build_infer_prompt(env_idx, init_ob, task_description)
+                score = info['score']
+                if score == 100:
+                    return history_log, True
+                else:
+                    return history_log, False
+
             cur_step += 1
-        history_log = self.build_infer_prompt(env_idx, init_ob)
+        history_log = self.build_infer_prompt(env_idx, init_ob, task_description)
         return history_log, False
 
     def update_local_memory(self, history_log, is_success, env_idx):
@@ -146,7 +163,7 @@ class HPCAgent:
             local_memories = local_memories[-3:]
         env_description = self.process_before_infer(init_ob)
         known_obs_history, action_guidance_history = self.global_memory.recall(env_description, task_description)
-        fewshots = self.fewshot_builder.get_inference_fewshots(self.env.taskName, env_description, task_description,
+        fewshots = self.fewshot_builder.get_inference_fewshots(env_idx, env_description, task_description,
                                                                self.global_memory, self.logging_dir)
         query = self.prompt_builder.get_inference_prompts(init_ob, fewshots, local_memories, short_memories,
                                                           known_obs_history, action_guidance_history, task_description)
@@ -232,9 +249,8 @@ class HPCAgent:
         # task_pattern = r'Your task is to:\s*(.*)'
         env_description = ''
         first_line = init_ob.split('\n')[0]
-        rooms = ['outside', 'foundry', 'greenhouse', 'art studio', 'workshop', 'bedroom', 'living room', 'kitchen',
-                 'bathroom']
-        for room in rooms:
+        first_line = first_line.replace("green house", "greenhouse")
+        for room in self.rooms:
             if first_line.__contains__(room):
                 env_description = room
         # task_match = re.search(task_pattern, init_ob, re.DOTALL)

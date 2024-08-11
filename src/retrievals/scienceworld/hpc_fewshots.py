@@ -4,7 +4,7 @@ import random
 import copy
 
 FOLDER = r'C:\Users\cxy\PycharmProjects\HippocampusAgent\prompts'
-PROMPT_FILE = 'alfworld_3prompts.json'
+PROMPT_FILE = 'science_world_prompts.jsonl'
 with open(os.path.join(FOLDER, PROMPT_FILE), 'r') as f:
     d = json.load(f)
 
@@ -26,54 +26,55 @@ class HPCFewshotBuilder:
     #         if name.startswith(k):
     #             return d[f'react_{v}_1'] + d[f'react_{v}_0']
     
-    def get_inference_fewshots(self, name, env_description , task_description, global_memory, logging_dir):
-        num_examples = 2
-        example_ids = []
-        task_memory = global_memory.task_memory
-        env_memory = global_memory.env_memory
-        task_type = self._convert_task_description(task_description)
-        if task_type in task_memory and 'success' in task_memory[task_type]:
-            task_all_traj = copy.deepcopy(task_memory[task_type]['success']['all_traj'])
-            task_all_traj = [tuple(traj.values()) for traj in task_all_traj]
-            if env_description in env_memory:
-                env_all_traj = copy.deepcopy(env_memory[env_description]['all_traj'])
-                env_all_traj = [tuple(traj.values()) for traj in env_all_traj]
-                intersection = list(set(task_all_traj) & set(env_all_traj))
-                if len(intersection) >= num_examples:
-                    choose_traj = random.sample(intersection, num_examples)
-                    example_ids.extend(choose_traj)
-                    task_all_traj = [traj for traj in task_all_traj if traj not in choose_traj]
-                    num_examples = 0
-                else:
-                    example_ids.extend(intersection)
-                    num_examples -= len(intersection)
-                    task_all_traj = [traj for traj in task_all_traj if traj not in intersection]
-            if num_examples > 0:
-                if len(task_all_traj) >= num_examples:
-                    choose_traj = random.sample(task_all_traj, num_examples)
-                    example_ids.extend(choose_traj)
-                    task_all_traj = [traj for traj in task_all_traj if traj not in choose_traj]
-                    num_examples = 0
-                else:
-                    example_ids.extend(task_all_traj)
-                    num_examples -= len(task_all_traj)
-                    task_all_traj = []
-        examples = []
-        if len(example_ids) > 0:
-            for example_idx in example_ids:
-                examples.append(self._ids2example(logging_dir, example_idx))
-        if num_examples > 0:
-            default_examples = self._default_inference_fewshots(name)
-            if default_examples:
-                default_examples = random.sample(default_examples, num_examples)
-                examples.extend(default_examples)
-        if len(examples) > 2:
-            # import pdb;pdb.set_trace()
-            examples = examples[:2]
-        if examples:
-            return '\n\n'.join(examples)
-        else:
-            return ''
+    def get_inference_fewshots(self, name, env_description, task_description, global_memory, logging_dir):
+        # num_examples = 2
+        # example_ids = []
+        # task_memory = global_memory.task_memory
+        # env_memory = global_memory.env_memory
+        # task_type = self._convert_task_description(task_description)
+        # if task_type in task_memory and 'success' in task_memory[task_type]:
+        #     task_all_traj = copy.deepcopy(task_memory[task_type]['success']['all_traj'])
+        #     task_all_traj = [tuple(traj.values()) for traj in task_all_traj]
+        #     if env_description in env_memory:
+        #         env_all_traj = copy.deepcopy(env_memory[env_description]['all_traj'])
+        #         env_all_traj = [tuple(traj.values()) for traj in env_all_traj]
+        #         intersection = list(set(task_all_traj) & set(env_all_traj))
+        #         if len(intersection) >= num_examples:
+        #             choose_traj = random.sample(intersection, num_examples)
+        #             example_ids.extend(choose_traj)
+        #             task_all_traj = [traj for traj in task_all_traj if traj not in choose_traj]
+        #             num_examples = 0
+        #         else:
+        #             example_ids.extend(intersection)
+        #             num_examples -= len(intersection)
+        #             task_all_traj = [traj for traj in task_all_traj if traj not in intersection]
+        #     if num_examples > 0:
+        #         if len(task_all_traj) >= num_examples:
+        #             choose_traj = random.sample(task_all_traj, num_examples)
+        #             example_ids.extend(choose_traj)
+        #             task_all_traj = [traj for traj in task_all_traj if traj not in choose_traj]
+        #             num_examples = 0
+        #         else:
+        #             example_ids.extend(task_all_traj)
+        #             num_examples -= len(task_all_traj)
+        #             task_all_traj = []
+        # examples = []
+        # if len(example_ids) > 0:
+        #     for example_idx in example_ids:
+        #         examples.append(self._ids2example(logging_dir, example_idx))
+        # if num_examples > 0:
+        #     default_examples = self._default_inference_fewshots(name)
+        #     if default_examples:
+        #         default_examples = random.sample(default_examples, num_examples)
+        #         examples.extend(default_examples)
+        # if len(examples) > 2:
+        #     # import pdb;pdb.set_trace()
+        #     examples = examples[:2]
+        # if examples:
+        #     return '\n\n'.join(examples)
+        # else:
+        #     return ''
+        return self._default_inference_fewshots(name)
                          
     def _ids2example(self, logging_dir, example_idx):
         env_idx, trial_idx = example_idx
@@ -84,9 +85,9 @@ class HPCFewshotBuilder:
         return example_log
 
     def _default_inference_fewshots(self, name):
-        for i, (k, v) in enumerate(PREFIXES.items()):
-            if name.startswith(k):
-                return [d[f'react_{v}_1'] , d[f'react_{v}_0']]
+        # for i, (k, v) in enumerate(PREFIXES.items()):
+        #     if name.startswith(k):
+        return d[str(name)]
         
     def get_expert_fewshots(self):
         with open("./prompts/expert_few_shot_example.txt", 'r') as f:
