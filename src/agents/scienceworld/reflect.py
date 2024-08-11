@@ -78,7 +78,7 @@ class ReflectAgent:
                 job_id = job_params[env_idx][0]
                 var_id = job_params[env_idx][1]
                 task_name = self.task_names[job_id]
-                self.env.load(task_name, var_id)
+                self.env.load(task_name, var_id, simplificationStr='easy')
                 init_ob, info = self.env.reset()
                 task_description = self.env.taskdescription()[18:].strip()
 
@@ -106,7 +106,7 @@ class ReflectAgent:
                     full_log: str = f.read()
                 env_logs: List[str] = full_log.split('#####\n\n#####')
                 self.update_local_memory(env_logs[env_idx], env_idx)
-            self.env.close()
+            # self.env.close()
             log_str: str = f"""
 -----
 SUCCESS: {num_successes}
@@ -163,11 +163,12 @@ ACCURACY: {round(num_successes / self.num_envs, 2)}
                         break
 
             if done:
-                history_log = self.build_infer_prompt(env_idx, init_ob, task_description)
                 score = info['score']
+                history_log = self.build_infer_prompt(env_idx, init_ob, task_description, score=score)
                 if score == 100:
                     return history_log, True
                 else:
+                    print('Failed task, id =', env_idx, ', score =', score)
                     return history_log, False
 
             cur_step += 1
@@ -180,7 +181,7 @@ ACCURACY: {round(num_successes / self.num_envs, 2)}
             reflection = self.llm(reflection_prompt) 
             self.local_memory.add(env_idx, reflection)
             
-    def build_infer_prompt(self, env_idx, init_ob, task_description):
+    def build_infer_prompt(self, env_idx, init_ob, task_description, score=None):
         short_memories = self.short_memory.recall()
         local_memories = self.local_memory.recall(env_idx)
         if len(local_memories) > 3:
@@ -188,6 +189,8 @@ ACCURACY: {round(num_successes / self.num_envs, 2)}
         fewshots = self.fewshot_builder.get_inference_fewshots(env_idx)
         action_guides = self.combine_action_guides()
         query = self.prompt_builder.get_inference_prompts(init_ob, fewshots, local_memories, short_memories, task_description, action_guides)
+        if score:
+            query += '\nFinal score: ' + str(score) + '\n'
         return query
         
     def build_reflection_prompt(self, log_str, env_idx):

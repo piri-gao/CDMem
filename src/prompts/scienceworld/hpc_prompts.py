@@ -22,10 +22,7 @@ Goal Task: Now, based on the task background, task instruction, reference exempl
                 query += f'\nTrial {i}:\n{m.strip()}'
         query += f"""
 
-Here is action guide:
-{action_guides}
-
-Here is your real task:
+Here is your current task:
 {init_ob}
 
 {task_description}

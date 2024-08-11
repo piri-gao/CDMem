@@ -71,7 +71,7 @@ class HPCAgent:
                 job_id = job_params[env_idx][0]
                 var_id = job_params[env_idx][1]
                 task_name = self.task_names[job_id]
-                self.env.load(task_name, var_id)
+                self.env.load(task_name, var_id, simplificationStr='easy')
                 init_ob, info = self.env.reset()
                 task_description = self.env.taskdescription()[18:].strip()
                 # print()
@@ -113,8 +113,43 @@ class HPCAgent:
             # print('\n\n=== Infer prompt begin ===\n', infer_prompt, '\n\n=== Infer prompt end===\n')
 
             system_msg = """You are the agent to interact in a household to solve a task.
+                    This is a big house with following locations:
+                    ["hallway", "greenhouse", "kitchen", "bathroom", "outside", "workshop", "art studio", "foundry", "bedroom", "living room"]
+                    
+                    These rooms are connected by doors, and you can move to a room by saying "go to the room" when door is open.
+                    "hallway" has doors to ["kitchen", "bathroom", "bedroom", "workshop", "art studio", "living room", "greenhouse"].
+                    "kitchen" has a door to "outside", "greenhouse" has a door to "outside" and a door to "hallway"
+                    "foundry" has a door to "outside" only.
+                    
+                    Note:
                     You need to output your thinking/reason/plan to solve the task, and select a correct action to execute.
-
+                    You need to carefully plan whether to go to the target place first or to proceed with the target object first.
+                    It would be better to go to the target place first if the target job is not necessary to be done at first.
+                    
+                    You selected action will be executed in the environment. Please be carefully design the correct action command.  
+                    Here are some action guides:
+                    
+                    action_type_description = [
+                        {"action_type": "wait",
+                         "desc": "wait for something to be done, for example, an object on stove to be boiled. Usage: 'wait#', where # is the number of turns you want to wait. only 'wait' means wait for 10 iterations."},
+                        {"action_type": "read", "desc": "read an object such as a recipe or a book. Usage: 'read recipe in inventory'"},
+                        {"action_type": "pick up", "desc": "pick up an object and put it into your inventory. Usage: 'pick up metal pot'"},
+                        {"action_type": "open",
+                         "desc": "open an object with doors before you search or put things in it. Usage: 'open door in kitchen', 'open drawer in counter', 'open glass jar'"},
+                        {"action_type": "activate",
+                         "desc": "activate and turn on an object such as sink (then the water flow from it) or stove, so that you can use it. Usage: 'activate stove', 'activate sink'"},
+                        {"action_type": "deactivate", "desc": "deactivate turn off the object"},
+                        {"action_type": "examine",
+                         "desc": "look at an object carefully. Note that you cannot examine a location. You can only 'examine something' or 'examine substance in something' Usage: 'examine substance in metal pot', 'examine ice'"},
+                        {"action_type": "move", "desc": "move/place the object to a place. Usage: 'move cupboard to red box'"},
+                        {"action_type": "use",
+                         "desc": "use an object A on object B, for example, For example, to check the temperature: Usage: 'use thermometer in inventory on ice', 'use thermometer in inventory on substance in metal pot'"},
+                        {"action_type": "pour",
+                         "desc": "pour the object A into the container B. Usage: 'pour jug into flower pot 4'"},
+                        {"action_type": "focus",
+                         "desc": "focus on an important object that are required by the task description (e.g., a substance, a plant, an animal, and so on). Usage: 'focus on cupboard'"},
+                    ]
+                    
                     Please using json format to output, e.g.,
                     The json output is:
                     {
@@ -148,11 +183,12 @@ class HPCAgent:
             #     print(f'> {action}\n{observation}')
             #     sys.stdout.flush()
             if done:
-                history_log = self.build_infer_prompt(env_idx, init_ob, task_description)
                 score = info['score']
+                history_log = self.build_infer_prompt(env_idx, init_ob, task_description, score=score)
                 if score == 100:
                     return history_log, True
                 else:
+                    print('Failed task, id =', env_idx, ', score =', score)
                     return history_log, False
 
             cur_step += 1
@@ -179,7 +215,7 @@ class HPCAgent:
             task_summary = self.llm(task_query, max_tokens=512)
             self.global_memory.add(task_summary, expert_trajectory, mode='task')
 
-    def build_infer_prompt(self, env_idx, init_ob, task_description):
+    def build_infer_prompt(self, env_idx, init_ob, task_description, score=None):
         short_memories = self.short_memory.recall()
         local_memories = self.local_memory.recall(env_idx)
         if len(local_memories) > 3:
@@ -188,9 +224,12 @@ class HPCAgent:
         known_obs_history, action_guidance_history = self.global_memory.recall(env_description, task_description)
         fewshots = self.fewshot_builder.get_inference_fewshots(env_idx, env_description, task_description,
                                                                self.global_memory, self.logging_dir)
-        action_guides = self.combine_action_guides()
+        # action_guides = self.combine_action_guides()
         query = self.prompt_builder.get_inference_prompts(init_ob, fewshots, local_memories, short_memories,
-                                                          known_obs_history, action_guidance_history, task_description, action_guides)
+                                                          known_obs_history, action_guidance_history, task_description, '')
+
+        if score:
+            query += '\nFinal score: ' + str(score) + '\n'
         return query
 
     def build_expert_prompt(self, history_log):
@@ -221,8 +260,8 @@ class HPCAgent:
         return env_query, task_query
 
     def process_after_reflection(self, expert_result, reflection_result, history_log, is_success):
-        scenario = history_log.split("Here is the task:")[-1].strip()
-        env_pattern = r'You are in the middle of a room\..*?(?=\n)'
+        scenario = history_log.split("Here is your real task:")[-1].strip()
+        env_pattern = r'This room is called the\..*?(?=\n)'
         task_pattern = r'Your task is to: (.*?)(?=\n)'
         location_pattern = r'\(1\)locations:(.*?)\(2\)functions:'
         function_pattern = r'\(2\)functions:(.*?)Expert Actions:'

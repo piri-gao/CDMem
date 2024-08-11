@@ -127,16 +127,9 @@ class HPCFewshotBuilder:
             raise ValueError(f"Unseen mode type: {mode}")
         
     def _convert_task_description(self, task_description):
-        task_types = ['boil', 'change-the-state-of-matter-of', 'chemistry-mix', 'chemistry-mix-paint-secondary-color',
-                      'chemistry-mix-paint-tertiary-color', 'find-animal', 'find-living-thing', 'find-non-living-thing',
-                      'find-plant', 'freeze', 'grow-fruit', 'grow-plant', 'identify-life-stages-1',
-                      'identify-life-stages-2', 'inclined-plane-determine-angle',
-                      'inclined-plane-friction-named-surfaces', 'inclined-plane-friction-unnamed-surfaces',
-                      'lifespan-longest-lived', 'lifespan-longest-lived-then-shortest-lived', 'lifespan-shortest-lived',
-                      'measure-melting-point-known-substance', 'measure-melting-point-unknown-substance', 'melt',
-                      'mendelian-genetics-known-plant', 'mendelian-genetics-unknown-plant', 'power-component',
-                      'power-component-renewable-vs-nonrenewable-energy', 'test-conductivity',
-                      'test-conductivity-of-unknown-substances', 'use-thermometer']
+        task_types = ['boil', 'melt', 'freeze', 'change', 'thermometer', 'measure', 'power', 'test', 'find', 'grow',
+                      'mix', 'lifespan', 'identify', 'inclined', 'mendelian']
+
         for task_type in task_types:
             if task_description.__contains__(task_type):
                 return task_type
