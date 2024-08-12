@@ -52,7 +52,7 @@ class HPCAgent:
         self.task_names = self.env.getTaskNames()
         self.rooms = ["hallway", "greenhouse", "kitchen", "bathroom", "outside", "workshop", "art studio",
                       "foundry", "bedroom", "living room"]
-        self.current_room = 'hallway'
+        self.current_room = ''
 
     def run(self):
         for trial_idx in range(self.start_trial_num, self.num_trials):
@@ -72,11 +72,22 @@ class HPCAgent:
                 var_id = job_params[env_idx][1]
                 task_name = self.task_names[job_id]
                 self.env.load(task_name, var_id, simplificationStr='easy')
-                init_ob, info = self.env.reset()
+                _, info = self.env.reset()
                 task_description = self.env.taskdescription()[18:].strip()
+                init_ob = info['look']
                 # print()
                 # print('=== Task ===\n', task_description)
                 # print('=== Init Observation ===\n', init_ob)
+                # for token in init_ob.split(' '):
+                #     token = token.replace('green house', 'greenhouse')
+                #     if token in self.rooms:
+                #         self.current_room = token
+                #         break
+                for room in self.rooms:
+                    if room in init_ob.split('\n')[0]:
+                        # print('new room detect:', room)
+                        self.current_room = room
+                        break
                 # print('=== Info ===\n', info)
                 # print()
                 # print(f"{env_idx} using {self.env.env_name}")
@@ -113,7 +124,7 @@ class HPCAgent:
             # print('\n\n=== Infer prompt begin ===\n', infer_prompt, '\n\n=== Infer prompt end===\n')
 
             system_msg = """You are the agent to interact in a household to solve a task.
-                    This is a big house with following locations:
+                    This is a big house with following rooms:
                     ["hallway", "greenhouse", "kitchen", "bathroom", "outside", "workshop", "art studio", "foundry", "bedroom", "living room"]
                     
                     These rooms are connected by doors, and you can move to a room by saying "go to the room" when door is open.
@@ -121,10 +132,11 @@ class HPCAgent:
                     "kitchen" has a door to "outside", "greenhouse" has a door to "outside" and a door to "hallway"
                     "foundry" has a door to "outside" only.
                     
-                    Note:
+                    Please Note:
                     You need to output your thinking/reason/plan to solve the task, and select a correct action to execute.
-                    You need to carefully plan whether to go to the target place first or to proceed with the target object first.
-                    It would be better to go to the target place first if the target job is not necessary to be done at first.
+                    Please read the current task description very carefully and never misunderstand your task. Your thinking should strictly follows the current task.
+                    You need to go to the target room first before you manage some object.
+                    And you should clearly know your current room (where you are) and the target room (where to go), try to arrive the target location first.
                     
                     You selected action will be executed in the environment. Please be carefully design the correct action command.  
                     Here are some action guides:
@@ -160,7 +172,7 @@ class HPCAgent:
 
             response = self.llm(infer_prompt, sys_msg=system_msg, use_json=True)
             reason = response['reason']
-            action = response['action']
+            action = response['action'].replace('the', '').replace('  ', ' ')
             # print('\n\n=== GPT action begin ===\n', response, '\n\n=== GPT action end ===\n')
             action = action.replace('(', '').replace(')', '')
             # action = self.env.action_parser(action)
@@ -173,8 +185,10 @@ class HPCAgent:
             if action.__contains__('go to') and observation.__contains__('move to'):
                 for room in self.rooms:
                     if observation.__contains__(room):
+                        # print('new room detect:', room)
                         self.current_room = room
-                        self.short_memory.add("look", info['look'])
+                        # self.short_memory.add("look", info['look'])
+                        init_ob = info['look']
                         break
             # print('\n\n=== Observation begin ===\n', observation, '\n\n=== Observation end ===\n')
             # print('\n\n=== Look begin ===\n', info['look'], '\n\n=== Look end ===\n')
@@ -188,11 +202,11 @@ class HPCAgent:
                 if score == 100:
                     return history_log, True
                 else:
-                    print('Failed task, id =', env_idx, ', score =', score)
+                    # print('Failed task, id =', env_idx, ', score =', score)
                     return history_log, False
 
             cur_step += 1
-        history_log = self.build_infer_prompt(env_idx, init_ob, task_description)
+        history_log = self.build_infer_prompt(env_idx, init_ob, task_description, score=info['score'])
         return history_log, False
 
     def update_local_memory(self, history_log, is_success, env_idx):
@@ -226,7 +240,7 @@ class HPCAgent:
                                                                self.global_memory, self.logging_dir)
         # action_guides = self.combine_action_guides()
         query = self.prompt_builder.get_inference_prompts(init_ob, fewshots, local_memories, short_memories,
-                                                          known_obs_history, action_guidance_history, task_description, '')
+                                                          known_obs_history, action_guidance_history, task_description, self.current_room)
 
         if score:
             query += '\nFinal score: ' + str(score) + '\n'

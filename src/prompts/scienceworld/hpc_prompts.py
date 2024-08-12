@@ -4,28 +4,37 @@ class HPCPromptBuilder:
     def __init__(self):
         pass
     
-    def get_inference_prompts(self, init_ob, fewshots, local_memories, short_memories, known_obs_history, action_guidance_history, task_description, action_guides):
+    def get_inference_prompts(self, look, fewshots, local_memories, short_memories, known_obs_history, action_guidance_history, task_description, current_room):
         query = f"""
+*** Your role ***
 You are the agent to interact in a household to solve a task. Here is an example. Please read this example carefully and learn valid actions and the environment.
 
+*** An example of a completed task ***
 {fewshots}
 
-Goal Task: Now, based on the task background, task instruction, reference exemplars, functions of containers, locations of items and past reflections to output the correct action.
 """
         if known_obs_history:
-            query += f"\nFunctions of Containers: {known_obs_history}"
+            query += f"\n*** Usage of items ***\n{known_obs_history}"
         if action_guidance_history:
-            query += f"\nAction Guidance:\n{action_guidance_history}"
+            query += f"\n*** Action Guidance from your past experience ***\n{action_guidance_history}"
         if len(local_memories) > 0:
-            query += "\nPast Reflections:"
+            query += "\n*** Reflection from your past failures on this task ***"
             for i, m in enumerate(local_memories):
                 query += f'\nTrial {i}:\n{m.strip()}'
         query += f"""
 
-Here is your current task:
-{init_ob}
+*** Here is your task description ***
+The room you're in right now: {current_room}
 
+Here, you can see:
+{look}
+
+Task that you are required to complete:
 {task_description}
+
+Note: Read this task description above carefully and never misunderstand the task.
+
+*** Task Interactive Trajectory: ***
 {short_memories}
 """
         return query 

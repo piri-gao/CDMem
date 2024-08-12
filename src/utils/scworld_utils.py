@@ -1,6 +1,9 @@
 import numpy as np
 import re
 
+# from sentence_transformers import SentenceTransformer
+# from sklearn.metrics.pairwise import cosine_similarity
+
 action_type_description = [
     {"action_type": "wait",
      "desc": "wait for something to be done, for example, an object on stove to be boiled. Usage: 'wait#', where # is the number of turns you want to wait. only 'wait' means wait for 10 iterations."},
@@ -31,7 +34,7 @@ focus_on_count = {
 }
 
 
-def findValidActionNew(predictions, env, look, recent_actions):
+def findValidActionNew(predictions, env, look, recent_actions, sbert_model=None):
     rooms = ["hallway", "greenhouse", "green house", "kitchen", "bathroom", "outside", "workshop", "art studio",
              "foundry", "bedroom", "living room"]
 
@@ -59,39 +62,24 @@ def findValidActionNew(predictions, env, look, recent_actions):
             if not valid:
                 validActions.remove(va)
 
-    # 1) if acton in top k is valid, choose it
-    found_valid_in_top = False
-    action = None
-    for pred in predictions:
-        pred = pred.replace("green house", "greenhouse")
-        if pred.strip() in validActions:
-            found_valid_in_top = True
-            action = pred.strip()
-            break
-    if found_valid_in_top:
-        return action
-    else:
-        validActions = list(validActions)
-        validActions.sort(key=lambda x: len(x))
+        # 1) if acton in top k is valid, choose it
+        found_valid_in_top = False
+        action = None
+        for pred in predictions[:5]:
+            pred = pred.replace("green house", "greenhouse")
+            if pred.strip() in validActions:
+                found_valid_in_top = True
+                action = pred.strip()
+                break
+        if found_valid_in_top:
+            return action
+        else:
+            # logger.info(f"No valid action found in top k={k} predictions.")
+            validActions = list(validActions)
+            validActions.sort(key=lambda x: len(x))
+            # logger.info("Valid Predictions: " + str(validActions))
 
-    return predictions[0]
-    # # jaccard
-    # topValue = 0.0
-    # topAction = predictions[0]
-    # # embPred = sbert_model.encode(pred, convert_to_tensor=True)
-    # tokensPred = predictions[0].split(" ")
-    # uniqueTokensPred = set(tokensPred)
-    #
-    # for validAction in validActions:
-    #     tokensAction = validAction.split(" ")
-    #     uniqueTokensAction = set(tokensAction)
-    #
-    #     intersection = uniqueTokensPred.intersection(uniqueTokensAction)
-    #     if (len(intersection) > topValue):
-    #         topAction = validAction
-    #         topValue = len(intersection)
-    #
-    # # Sanitize top action
-    # topAction = re.sub(r'[^A-Za-z0-9 ]+', '', topAction)
-    # action = topAction
-    # return action
+            # 2) else, find most similar action
+
+        return predictions[0]
+        # 后面是一坨屎

@@ -89,6 +89,8 @@ def main(args):
     
     
 if __name__ == '__main__':
+    import warnings
+    warnings.filterwarnings('ignore')
     args = get_args()
     main(args)
 

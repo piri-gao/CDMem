@@ -35,8 +35,8 @@ class ShortMemory:
                 s += item['value']
             elif item['label'] == 'think':
                 s += f'> think: {item["value"]}\nOK.\n'
-            elif item['label'] == 'look':
-                s += f'Your current location:\n{item["value"]}\n'
+            # elif item['label'] == 'look':
+            #     s += f'Your current room:\n{item["value"]}\n'
             if i != len(self.history) - 1:
                 s += '\n'
         return s
