@@ -186,7 +186,7 @@ class HPCAgent:
 
             response = self.llm(infer_prompt, sys_msg=system_msg, use_json=True)
             reason = response['reason']
-            action = response['action'].replace('the', '').replace('  ', ' ')
+            action = response['action'].replace(' the ', ' ').replace('  ', ' ')
             # print('\n\n=== GPT action begin ===\n', response, '\n\n=== GPT action end ===\n')
             action = action.replace('(', '').replace(')', '')
             # action = self.env.action_parser(action)
