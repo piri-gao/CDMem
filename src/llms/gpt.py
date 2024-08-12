@@ -64,7 +64,7 @@ class GPTWrapper:
             import sys
             sys.exit(1)
 
-    # @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
+    @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
     def get_chat(self, prompt: str, model: ChatModel, max_tokens: int, temperature: float = 0.0, sys_msg=None,
                  use_json=False, stop_strs: Optional[List[str]] = None, is_batched: bool = False) -> str:
 
