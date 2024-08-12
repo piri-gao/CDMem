@@ -33,13 +33,6 @@ Here, what you can see:
 {look}
 
 *** Task Interactive Trajectory: ***
-Please note, interactive trajectory is realtime feedback from environment. You are required to interact with the environment to complete the task.
-So, you need to output your thinking and an action, and the action will be executed in the environment.
-But if your action is invalid, you will receive two types of feedback:
-1. 'No known action matches that input.' means the environment can not execute the command. It may be due to an inability to reach the target position or a syntax error. Please rethink and output the correct action.
-2. 'Ambiguous request: Please enter the number for the action you intended (or blank to cancel): <followed by some options with their index numbers. Format is #: xxx>', In this situation, you need to choose the correct action by entering the number of the option index you intended. This means your action should be a number. An example of an option: '0: move apple seed'
-
-Trajectory:
 {short_memories}
 
 

@@ -156,7 +156,7 @@ class GlobalMemory:
         return increment_env, increment_task
             
     def _convert_task_description(self, task_description):
-        task_types = ['boil', 'melt', 'freeze', 'change', 'thermometer', 'measure', 'power', 'test', 'find', 'grow', 'mix', 'lifespan', 'identify', 'inclined', 'mendelian']
+        task_types = ['find a(n) non-living thing', 'grow', 'starting from earliest to latest', 'determine which', 'find the animal with the longest life span', 'measure', 'melt', 'determine whether']
         for task_type in task_types:
             if task_description.__contains__(task_type):
                 return task_type

@@ -105,7 +105,7 @@ class HPCAgent:
                 else:
                     self.logger.log_world_fail(trial_idx, env_idx)
                 self.logger.log_trial_content(history_log, is_success, trial_idx, env_idx)
-                expert_trajectory = self.update_local_memory(history_log, is_success, env_idx)
+                expert_trajectory = self.update_local_memory(history_log, is_success, env_idx, task_description)
                 self.logger.log_local_memory(trial_idx)
                 self.update_global_memory(expert_trajectory, env_idx, trial_idx)
                 self.logger.log_global_memory(trial_idx)
@@ -117,6 +117,7 @@ class HPCAgent:
     def run_trajectory(self, env_idx, init_ob, task_description, to_print=True, info=None):
         cur_step = 0
         # print(init_ob)
+        score = 0
         self.short_memory.reset()
         while cur_step < self.max_steps:
             infer_prompt = self.build_infer_prompt(env_idx, init_ob, task_description)
@@ -162,11 +163,24 @@ class HPCAgent:
                          "desc": "focus on an important object that are required by the task description (e.g., a substance, a plant, an animal, and so on). Usage: 'focus on cupboard'"},
                     ]
                     
+                    Please note, interactive trajectory is realtime feedback from environment. You are required to interact with the environment to complete the task.
+                    So, you need to output your thinking and an action, and the action will be executed in the environment.
+                    But if your action is invalid, you will receive two types of feedback:
+                    1. 'No known action matches that input.' means the environment can not execute the command. It may be due to an inability to reach the target position or a syntax error. Please rethink and output the correct action.
+                    2. 'Ambiguous request: Please enter the number for the action you intended (or blank to cancel): <followed by some options with their index numbers. Format is #: xxx>', In this situation, you need to choose the correct action by entering the number of the option index you intended. This means your action should be a number. An example of an option: '0: move apple seed'
+                    
                     Please using json format to output, e.g.,
+                    
                     The json output is:
                     {
                         "reason": "To solve the task, I need to be in same location as water and have substance alone in a single container",
                         "action": "go to the kitchen"
+                    }
+                    
+                    or:
+                    {
+                        "reason": "To solve the task, I need to..."
+                        "action": "0"
                     }
                     """
 
@@ -181,6 +195,8 @@ class HPCAgent:
             action = findValidActionNew([action], self.env, info['look'], recent_actions=self.short_memory.recent_actions())
             # print('\n\n=== Correct action begin ===\n', action, '\n\n=== Correct action end ===\n')
             observation, reward, done, info = self.env.step(action)
+            if info['score']:
+                score = info['score']
             self.short_memory.add("observation", observation)
             if action.__contains__('go to') and observation.__contains__('move to'):
                 for room in self.rooms:
@@ -197,7 +213,6 @@ class HPCAgent:
             #     print(f'> {action}\n{observation}')
             #     sys.stdout.flush()
             if done:
-                score = info['score']
                 history_log = self.build_infer_prompt(env_idx, init_ob, task_description, score=score)
                 if score == 100:
                     return history_log, True
@@ -206,16 +221,16 @@ class HPCAgent:
                     return history_log, False
 
             cur_step += 1
-        history_log = self.build_infer_prompt(env_idx, init_ob, task_description, score=info['score'])
+        history_log = self.build_infer_prompt(env_idx, init_ob, task_description, score)
         return history_log, False
 
-    def update_local_memory(self, history_log, is_success, env_idx):
+    def update_local_memory(self, history_log, is_success, env_idx, task_description):
         if not self.local_memory.is_skip(env_idx):
             expert_prompt = self.build_expert_prompt(history_log)
             expert_result = self.llm(expert_prompt, max_tokens=512)
             reflection_prompt = self.build_reflection_prompt(history_log, is_success, expert_result, env_idx)
             reflection_result = self.llm(reflection_prompt, max_tokens=512)
-            expert_trajectory = self.process_after_reflection(expert_result, reflection_result, history_log, is_success)
+            expert_trajectory = self.process_after_reflection(expert_result, reflection_result, history_log, is_success, task_description)
             self.local_memory.add(env_idx, expert_trajectory)
         return expert_trajectory
 
@@ -273,25 +288,25 @@ class HPCAgent:
             task_query = self.prompt_builder.task_summary_prompts(increment_task, task_fewshots, is_success)
         return env_query, task_query
 
-    def process_after_reflection(self, expert_result, reflection_result, history_log, is_success):
+    def process_after_reflection(self, expert_result, reflection_result, history_log, is_success, task_description):
         scenario = history_log.split("Here is your real task:")[-1].strip()
         env_pattern = r'This room is called the\..*?(?=\n)'
-        task_pattern = r'Your task is to: (.*?)(?=\n)'
+        # task_pattern = r'Your task is to: (.*?)(?=\n)'
         location_pattern = r'\(1\)locations:(.*?)\(2\)functions:'
         function_pattern = r'\(2\)functions:(.*?)Expert Actions:'
         action_pattern = r'Expert Actions:(.*)'
         reflection_pattern = r'Reflection: (.*?)(?:\n|$)'
 
-        env_description = task_description = ''
+        env_description = ''
         location = function = action = reflection = ''
 
         env_match = re.search(env_pattern, scenario, re.DOTALL)
         if env_match:
             env_description = env_match.group(0).strip()
 
-        task_match = re.search(task_pattern, scenario, re.DOTALL)
-        if task_match:
-            task_description = task_match.group(1).strip()
+        # task_match = re.search(task_pattern, scenario, re.DOTALL)
+        # if task_match:
+        #     task_description = task_match.group(1).strip()
 
         location_match = re.search(location_pattern, expert_result, re.DOTALL)
         if location_match:
