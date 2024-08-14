@@ -289,8 +289,8 @@ class HPCAgent:
         return env_query, task_query
 
     def process_after_reflection(self, expert_result, reflection_result, history_log, is_success, task_description):
-        scenario = history_log.split("Here is your real task:")[-1].strip()
-        env_pattern = r'This room is called the\..*?(?=\n)'
+        scenario = history_log.split("Task that you are required to complete, read this task description above carefully and never misunderstand the task.")[-1].strip()
+        # env_pattern = r'This room is called the\..*?(?=\n)'
         # task_pattern = r'Your task is to: (.*?)(?=\n)'
         location_pattern = r'\(1\)locations:(.*?)\(2\)functions:'
         function_pattern = r'\(2\)functions:(.*?)Expert Actions:'
@@ -298,15 +298,23 @@ class HPCAgent:
         reflection_pattern = r'Reflection: (.*?)(?:\n|$)'
 
         env_description = ''
+        task_description = 'other'
         location = function = action = reflection = ''
+        
+        # 需要在这match env和task
+        first_line = scenario.split('\n')[0].strip()
+        for room in self.rooms:
+            if first_line.__contains__(room):
+                env_description = room
+                break
 
-        env_match = re.search(env_pattern, scenario, re.DOTALL)
-        if env_match:
-            env_description = env_match.group(0).strip()
+        task_types = ['find a(n) non-living thing', 'grow', 'starting from earliest to latest', 'determine which',
+                      'find the animal with the longest life span', 'measure', 'melt', 'determine whether']
 
-        # task_match = re.search(task_pattern, scenario, re.DOTALL)
-        # if task_match:
-        #     task_description = task_match.group(1).strip()
+        for task_type in task_types:
+            if first_line.__contains__(task_type):
+                task_description = task_type
+                break
 
         location_match = re.search(location_pattern, expert_result, re.DOTALL)
         if location_match:
