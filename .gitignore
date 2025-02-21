@@ -163,4 +163,3 @@ cython_debug/
 
 # my
 logs/
-scripts/set_api.sh
