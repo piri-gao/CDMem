@@ -1,8 +1,8 @@
 from .reflect_memory import ShortMemory as ReflectShortMemory
 from .reflect_memory import LocalMemory as ReflectLocalMemory
-from .hpc_memory import ShortMemory as HPCShortMemory
-from .hpc_memory import LocalMemory as HPCLocalMemory
-from .hpc_memory import GlobalMemory as HPCGlobalMemory
+from .cdmem_memory import ShortMemory as CDMemShortMemory
+from .cdmem_memory import LocalMemory as CDMemLocalMemory
+from .cdmem_memory import GlobalMemory as CDMemGlobalMemory
 from .autoguide_memory import ShortMemory as AutoguideShortMemory
 from .autoguide_memory import LocalMemory as AutoguideLocalMemory
 from .autoguide_memory import GlobalMemory as AutoguideGlobalMemory

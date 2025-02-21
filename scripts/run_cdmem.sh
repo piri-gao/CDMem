@@ -4,12 +4,12 @@ cd ..
 python src/main.py \
         --num_trials 5 \
         --num_envs 134 \
-        --run_name "hpc_logs_t1e20" \
+        --run_name "cdmem" \
         --model "gpt-4o-mini"  \
-        --agent "hpc"   \
+        --agent "cdmem"   \
         --env "alfworld" \
         # --is_vector
         # --is_resume \
-        # --resume_dir logs/hpc_logs_t5e67_0628_050752 \
+        # --resume_dir logs/ \
         # --start_trial_num 4
         

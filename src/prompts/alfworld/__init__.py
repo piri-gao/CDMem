@@ -1,4 +1,4 @@
 from .reflect_prompts import ReflectPromptBuilder
-from .hpc_prompts import HPCPromptBuilder
+from .cdmem_prompts import CDMemPromptBuilder
 from .autoguide_prompts import AutoguidePromptBuilder
 from .expel_prompts import ExpelPromptBuilder

@@ -1,5 +1,5 @@
 from .reflect import ReflectAgent
-from .hpc import HPCAgent
+from .cdmem import CDMemAgent
 from .autoguide import AutoguideAgent
 from .expel import ExpelAgent
 from .react import ReactAgent

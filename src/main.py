@@ -20,7 +20,7 @@ def get_args():
     parser.add_argument("--resume_dir", type=str, help="If resume, the logging directory", default="")
     parser.add_argument("--start_trial_num", type=int, help="If resume, the start trial num", default=0)
     parser.add_argument("--model", type=str, help="The model to use. One of `gpt-4`, `gpt-3.5-turbo`, or `text-davinci-003")
-    parser.add_argument("--agent", type=str, help="The agent to use. One of `reflect`, `hpc`")
+    parser.add_argument("--agent", type=str, help="The agent to use. One of `reflect`, `cdmem`")
     parser.add_argument("--env", type=str, help="The enviroment to use. One of `alfworld`")
     parser.add_argument("--is_vector", action='store_true', help="To use vector database")
 

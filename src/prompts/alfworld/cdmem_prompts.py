@@ -1,6 +1,6 @@
 import re
 
-class HPCPromptBuilder:
+class CDMemPromptBuilder:
     def __init__(self):
         pass
     

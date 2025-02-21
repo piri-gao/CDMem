@@ -1,3 +1,3 @@
-from .alfworld import HPCPromptBuilder, ReflectPromptBuilder, AutoguidePromptBuilder, ExpelPromptBuilder
+from .alfworld import CDMemPromptBuilder, ReflectPromptBuilder, AutoguidePromptBuilder, ExpelPromptBuilder
 
-PROMPT_BUILDER = dict(alfworld=dict(reflect=ReflectPromptBuilder, hpc=HPCPromptBuilder, autoguide=AutoguidePromptBuilder, expel=ExpelPromptBuilder, react=ReflectPromptBuilder))
+PROMPT_BUILDER = dict(alfworld=dict(reflect=ReflectPromptBuilder, cdmem=CDMemPromptBuilder, autoguide=AutoguidePromptBuilder, expel=ExpelPromptBuilder, react=ReflectPromptBuilder))

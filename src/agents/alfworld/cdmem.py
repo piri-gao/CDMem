@@ -6,9 +6,9 @@ import itertools
 
 from typing import List, Callable
 
-class HPCAgent:
+class CDMemAgent:
     """
-    HPC Agent class.
+    CDMem Agent class.
     """
     def __init__(self, 
                  num_trials,

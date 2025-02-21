@@ -1,3 +1,3 @@
-from .alfworld import ReflectFewshotBuilder, HPCFewshotBuilder, AutoguideFewshotBuilder, ExpelFewshotBuilder
+from .alfworld import ReflectFewshotBuilder, CDMemFewshotBuilder, AutoguideFewshotBuilder, ExpelFewshotBuilder
 
-FEWSHOT_BUILDER = dict(alfworld=dict(reflect=ReflectFewshotBuilder, hpc=HPCFewshotBuilder, autoguide=AutoguideFewshotBuilder, expel=ExpelFewshotBuilder,react=ReflectFewshotBuilder))
+FEWSHOT_BUILDER = dict(alfworld=dict(reflect=ReflectFewshotBuilder, cdmem=CDMemFewshotBuilder, autoguide=AutoguideFewshotBuilder, expel=ExpelFewshotBuilder,react=ReflectFewshotBuilder))

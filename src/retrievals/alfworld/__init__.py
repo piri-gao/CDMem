@@ -1,4 +1,4 @@
 from .reflect_fewshots import ReflectFewshotBuilder
-from .hpc_fewshots import HPCFewshotBuilder
+from .cdmem_fewshots import CDMemFewshotBuilder
 from .autoguide_fewshots import AutoguideFewshotBuilder
 from .expel_fewshots import ExpelFewshotBuilder

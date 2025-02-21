@@ -17,7 +17,7 @@ PREFIXES = {
     'pick_two_obj': 'puttwo'
 }
 
-class HPCFewshotBuilder:
+class CDMemFewshotBuilder:
     def __init__(self):
         pass
     
