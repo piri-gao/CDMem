@@ -8,6 +8,7 @@ This repository contains the code for the paper **"An Efficient Context-Dependen
 
 - [Installation](#installation)
 - [Running AlfWorld Experiments](#running-alfworld-experiments)
+- [Running ScienceWorld Experiments](#running-scienceworld-experiments)
 - [License](#license)
 
 ## Installation
@@ -56,6 +57,15 @@ To run other algorithms, such as Reflexion, use the corresponding script:
 ```bash
 cd scripts
 sh run_reflexion.sh
+```
+
+## Running ScienceWorld Experiments
+
+To run the ScienceWorld experiments using the CDMem framework:
+
+```bash
+cd scripts
+sh run_cdmem_for_scienceworld.sh
 ```
 
 ## License
